@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cockpit Executivo S&OE — Siderúrgica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#0b1220;
+  --bg-2:#0e1726;
+  --panel:#121d31;
+  --panel-2:#16233b;
+  --panel-3:#1b2c47;
+  --line:#22324f;
+  --line-soft:#1a2840;
+  --txt:#e8eef7;
+  --txt-2:#9fb0c9;
+  --txt-3:#6b7e9c;
+  --cyan:#22d3ee;
+  --cyan-soft:rgba(34,211,238,.14);
+  --green:#34e0a1;
+  --green-soft:rgba(52,224,161,.14);
+  --amber:#f9b94e;
+  --amber-soft:rgba(249,185,78,.14);
+  --red:#fb6f72;
+  --red-soft:rgba(251,111,114,.14);
+  --violet:#a78bfa;
+  --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+  --radius:18px;
+  --radius-sm:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,'Segoe UI',Roboto,sans-serif;
+  background:
+    radial-gradient(1200px 700px at 12% -8%, #11203a 0%, transparent 55%),
+    radial-gradient(1000px 600px at 100% 0%, #0f2233 0%, transparent 50%),
+    var(--bg);
+  color:var(--txt);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:.1px;
+}
+::selection{background:var(--cyan-soft);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--line-soft)}
+
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+
+/* ============ HEADER ============ */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(10,17,30,.82);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line-soft);
+}
+.topbar-inner{
+  max-width:1480px;margin:0 auto;
+  padding:16px 28px;
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand .logo{
+  width:46px;height:46px;border-radius:13px;
+  background:linear-gradient(145deg,var(--cyan),var(--green));
+  display:grid;place-items:center;
+  box-shadow:0 8px 26px -8px rgba(34,211,238,.55);
+  flex-shrink:0;
+}
+.brand .logo svg{width:26px;height:26px}
+.brand h1{font-size:17px;font-weight:700;line-height:1.15;letter-spacing:.2px}
+.brand .sub{font-size:11.5px;color:var(--txt-3);font-weight:500;text-transform:uppercase;letter-spacing:1.4px;margin-top:2px}
+
+.topbar-meta{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.clock{
+  text-align:right;line-height:1.25;
+  padding-right:14px;border-right:1px solid var(--line);
+}
+.clock .time{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--txt)}
+.clock .date{font-size:11.5px;color:var(--txt-3);font-weight:500;text-transform:capitalize}
+
+.health-chip{
+  display:flex;align-items:center;gap:11px;
+  padding:9px 16px 9px 13px;border-radius:14px;
+  background:var(--panel-2);border:1px solid var(--line);
+}
+.health-chip .dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;position:relative}
+.health-chip .dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;opacity:.4;background:var(--pc,var(--green));animation:pulse 2s infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:.55}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+.health-chip .label{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt-3);font-weight:600}
+.health-chip .val{font-size:15px;font-weight:700}
+.health-chip .score{font-size:11px;color:var(--txt-2);font-weight:600}
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 15px;border-radius:11px;font-size:12.5px;font-weight:600;
+  background:var(--panel-2);border:1px solid var(--line);color:var(--txt-2);
+  transition:.18s;
+}
+.btn svg{width:15px;height:15px}
+.btn:hover{background:var(--panel-3);color:var(--txt);border-color:var(--cyan)}
+.btn.primary{background:linear-gradient(135deg,var(--cyan),var(--green));color:#06121e;border:none}
+.btn.primary:hover{filter:brightness(1.08)}
+
+/* ============ TABS ============ */
+.tabs{
+  max-width:1480px;margin:0 auto;
+  padding:0 28px;
+  display:flex;gap:4px;overflow-x:auto;
+}
+.tab{
+  padding:14px 18px;font-size:13.5px;font-weight:600;color:var(--txt-3);
+  background:none;border:none;border-bottom:2.5px solid transparent;
+  white-space:nowrap;transition:.18s;display:flex;align-items:center;gap:8px;
+}
+.tab svg{width:16px;height:16px;opacity:.7}
+.tab:hover{color:var(--txt-2)}
+.tab.active{color:var(--txt);border-bottom-color:var(--cyan)}
+.tab.active svg{opacity:1}
+.tab .badge{
+  font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;
+  background:var(--red-soft);color:var(--red);
+}
+
+/* ============ LAYOUT ============ */
+.wrap{max-width:1480px;margin:0 auto;padding:26px 28px 60px}
+.view{display:none;animation:fade .4s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.section-head{margin:0 0 16px}
+.section-head h2{font-size:16px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:9px}
+.section-head .accent{width:4px;height:18px;border-radius:3px;background:linear-gradient(var(--cyan),var(--green))}
+.section-head p{font-size:12.5px;color:var(--txt-3);margin-top:5px;margin-left:13px;max-width:760px;line-height:1.5}
+
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--bg-2));
+  border:1px solid var(--line-soft);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);position:relative;
+}
+.card .ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px}
+.card .ch .t{font-size:13px;font-weight:600;color:var(--txt)}
+.card .ch .d{font-size:11px;color:var(--txt-3);margin-top:3px;line-height:1.4}
+.card .ch .tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:4px 9px;border-radius:8px;flex-shrink:0}
+.tag.ok{background:var(--green-soft);color:var(--green)}
+.tag.warn{background:var(--amber-soft);color:var(--amber)}
+.tag.bad{background:var(--red-soft);color:var(--red)}
+.tag.info{background:var(--cyan-soft);color:var(--cyan)}
+
+.grid{display:grid;gap:16px}
+
+/* ===== HERO ROW ===== */
+.hero{grid-template-columns:1.05fr 1.05fr 2fr;align-items:stretch}
+.gauge-card{display:flex;flex-direction:column}
+.gauge-wrap{position:relative;flex:1;display:grid;place-items:center;min-height:178px}
+.gauge-center{position:absolute;text-align:center;pointer-events:none}
+.gauge-center .big{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.gauge-center .lab{font-size:10.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:1.2px;margin-top:4px;font-weight:600}
+.gauge-meta{display:flex;justify-content:space-between;margin-top:8px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.gauge-meta .m{text-align:center;flex:1}
+.gauge-meta .m .v{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.gauge-meta .m .l{font-size:9.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+
+/* KPI mini grid inside hero */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kpi{
+  background:var(--panel-2);border:1px solid var(--line-soft);border-radius:14px;
+  padding:15px 16px;transition:.2s;position:relative;overflow:hidden;
+}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan);opacity:.85}
+.kpi.g::before{background:var(--green)}.kpi.a::before{background:var(--amber)}.kpi.r::before{background:var(--red)}
+.kpi:hover{transform:translateY(-2px);border-color:var(--line)}
+.kpi .kl{font-size:10.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.9px;font-weight:600;display:flex;align-items:center;gap:6px}
+.kpi .kl svg{width:13px;height:13px}
+.kpi .kv{font-size:27px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:7px;line-height:1}
+.kpi .kv .u{font-size:13px;font-weight:600;color:var(--txt-3);margin-left:3px}
+.kpi .kd{font-size:11px;margin-top:7px;display:flex;align-items:center;gap:5px;font-weight:600}
+.kpi .kd.up{color:var(--green)}.kpi .kd.down{color:var(--red)}.kpi .kd.flat{color:var(--txt-3)}
+.kpi .kd .tri{font-size:9px}
+.kpi .kd span.ctx{color:var(--txt-3);font-weight:500}
+
+/* ===== generic stat strip ===== */
+.statstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+/* ===== chart cards ===== */
+.chart-box{position:relative;width:100%}
+.h-radar{height:300px}
+.h-bal{height:300px}
+.h-cap{height:260px}
+.h-fc{height:260px}
+.h-cov{height:230px}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.legend .li{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt-2);font-weight:500}
+.legend .li .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+
+/* ===== cadence timeline ===== */
+.cadence{display:flex;flex-direction:column;gap:0;position:relative}
+.cad-row{display:grid;grid-template-columns:120px 1fr;gap:18px;padding:14px 0;border-bottom:1px solid var(--line-soft);align-items:center}
+.cad-row:last-child{border-bottom:none}
+.cad-week{display:flex;flex-direction:column;gap:2px}
+.cad-week .wk{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.cad-week .dt{font-size:10.5px;color:var(--txt-3);font-weight:500}
+.cad-week .now{font-size:9px;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.cad-events{display:flex;gap:10px;flex-wrap:wrap}
+.cad-ev{
+  display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:12px;
+  background:var(--panel-2);border:1px solid var(--line-soft);font-size:12px;font-weight:600;
+  transition:.18s;
+}
+.cad-ev:hover{transform:translateY(-2px);border-color:var(--line)}
+.cad-ev .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.cad-ev .ic svg{width:15px;height:15px}
+.cad-ev .meta{line-height:1.25}
+.cad-ev .meta .nm{font-size:12px;font-weight:600}
+.cad-ev .meta .ow{font-size:10px;color:var(--txt-3);font-weight:500}
+.cad-ev.done{opacity:.5}
+.cad-ev.done .nm{text-decoration:line-through}
+
+.minicad{display:flex;gap:0;overflow-x:auto;padding:6px 0}
+.minicad .step{flex:1;min-width:130px;position:relative;padding:0 6px;text-align:center}
+.minicad .step .bar{height:6px;border-radius:6px;background:var(--line);margin-bottom:12px;position:relative;overflow:hidden}
+.minicad .step .bar i{position:absolute;inset:0;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--green))}
+.minicad .step.future .bar i{background:var(--line-soft)}
+.minicad .step .wk{font-size:13px;font-weight:800}
+.minicad .step .lab{font-size:10px;color:var(--txt-3);margin-top:2px}
+.minicad .step .pill{margin-top:7px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:20px;display:inline-block}
+
+/* ===== exceptions ===== */
+.exc-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.search{
+  flex:1;min-width:220px;display:flex;align-items:center;gap:9px;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;
+}
+.search svg{width:16px;height:16px;color:var(--txt-3);flex-shrink:0}
+.search input{background:none;border:none;color:var(--txt);font-size:13px;width:100%;outline:none}
+.search input::placeholder{color:var(--txt-3)}
+.filters{display:flex;gap:7px;flex-wrap:wrap}
+.fbtn{
+  padding:9px 14px;border-radius:11px;font-size:12px;font-weight:600;
+  background:var(--panel-2);border:1px solid var(--line);color:var(--txt-2);transition:.16s;
+  display:flex;align-items:center;gap:7px;
+}
+.fbtn .cnt{font-size:10px;font-weight:700;padding:0 6px;border-radius:20px;background:var(--line);color:var(--txt-2)}
+.fbtn:hover{border-color:var(--cyan);color:var(--txt)}
+.fbtn.active{background:var(--cyan-soft);border-color:var(--cyan);color:var(--cyan)}
+.fbtn.active .cnt{background:var(--cyan);color:#06121e}
+
+.table-card{padding:0;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{
+  text-align:left;padding:13px 16px;font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;
+  color:var(--txt-3);font-weight:700;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2;
+}
+thead th.num{text-align:right}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tbody td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+tbody tr{transition:.12s}
+tbody tr:hover{background:var(--panel-2)}
+tbody tr:last-child td{border-bottom:none}
+.sku-cell{display:flex;flex-direction:column;gap:2px}
+.sku-cell .code{font-weight:700;font-size:12.5px}
+.sku-cell .desc{font-size:10.5px;color:var(--txt-3)}
+.sev{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.sev .d{width:7px;height:7px;border-radius:50%}
+.sev.crit{background:var(--red-soft);color:var(--red)}.sev.crit .d{background:var(--red)}
+.sev.high{background:var(--amber-soft);color:var(--amber)}.sev.high .d{background:var(--amber)}
+.sev.low{background:var(--green-soft);color:var(--green)}.sev.low .d{background:var(--green)}
+.bar-cell{display:flex;align-items:center;gap:9px;min-width:120px}
+.bar-cell .track{flex:1;height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar-cell .track i{display:block;height:100%;border-radius:6px}
+.cov-pill{font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ===== simulator ===== */
+.sim-grid{grid-template-columns:340px 1fr}
+.ctrl{margin-bottom:22px}
+.ctrl:last-child{margin-bottom:0}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;font-weight:600;margin-bottom:11px}
+.ctrl label .v{font-size:14px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums}
+.ctrl label .v.green{color:var(--green)}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;
+  background:var(--line);outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:#fff;border:4px solid var(--cyan);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:.12s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid var(--cyan);cursor:pointer}
+.seg{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px}
+.seg button{flex:1;padding:9px;border:none;background:none;color:var(--txt-3);font-size:12px;font-weight:600;border-radius:8px;transition:.15s}
+.seg button.active{background:var(--cyan-soft);color:var(--cyan)}
+.ctrl .hint{font-size:10.5px;color:var(--txt-3);margin-top:8px;line-height:1.45}
+
+.scenario-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.scn{
+  background:var(--panel-2);border:1px solid var(--line-soft);border-radius:15px;padding:18px;
+  position:relative;transition:.2s;cursor:default;
+}
+.scn.best{border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 14px 36px -18px rgba(52,224,161,.5)}
+.scn .reco{position:absolute;top:-10px;right:14px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;background:var(--green);color:#06121e;padding:4px 11px;border-radius:20px}
+.scn h4{font-size:13px;font-weight:700;margin-bottom:3px}
+.scn .sd{font-size:10.5px;color:var(--txt-3);margin-bottom:14px}
+.scn .scorewrap{display:flex;align-items:baseline;gap:7px;margin-bottom:14px}
+.scn .score{font-size:38px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.scn .score-lab{font-size:10.5px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.6px}
+.scn .rows{display:flex;flex-direction:column;gap:9px}
+.scn .r{display:flex;justify-content:space-between;font-size:11.5px;align-items:center}
+.scn .r .k{color:var(--txt-3)}
+.scn .r .v{font-weight:700;font-variant-numeric:tabular-nums}
+.scn .scorebar{height:5px;border-radius:5px;background:var(--line);margin-top:14px;overflow:hidden}
+.scn .scorebar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width .5s}
+
+.reco-banner{
+  margin-top:16px;display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;
+  background:linear-gradient(135deg,var(--green-soft),transparent);border:1px solid var(--green);
+}
+.reco-banner .ic{width:42px;height:42px;border-radius:12px;background:var(--green-soft);display:grid;place-items:center;flex-shrink:0}
+.reco-banner .ic svg{width:24px;height:24px;color:var(--green)}
+.reco-banner .tx .t{font-size:13.5px;font-weight:700;color:var(--green)}
+.reco-banner .tx .d{font-size:12px;color:var(--txt-2);margin-top:3px;line-height:1.45}
+
+/* ===== methodology ===== */
+.method-grid{grid-template-columns:1fr 1fr}
+.formula{
+  background:var(--panel-2);border:1px solid var(--line-soft);border-radius:14px;padding:18px;margin-bottom:14px;
+}
+.formula:last-child{margin-bottom:0}
+.formula h4{font-size:13px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.formula h4 .n{width:24px;height:24px;border-radius:8px;background:var(--cyan-soft);color:var(--cyan);display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.formula .eq{font-family:'SF Mono',ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 13px;color:var(--cyan);margin:9px 0;overflow-x:auto}
+.formula p{font-size:12px;color:var(--txt-2);line-height:1.6}
+.ztable{width:100%;font-size:12px;margin-top:10px}
+.ztable td{padding:7px 10px;border-bottom:1px solid var(--line-soft)}
+.ztable td:last-child{text-align:right;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums}
+
+.footer{text-align:center;padding:30px;color:var(--txt-3);font-size:11.5px;border-top:1px solid var(--line-soft);margin-top:10px}
+.footer b{color:var(--txt-2)}
+
+/* responsive */
+@media(max-width:1180px){
+  .hero{grid-template-columns:1fr 1fr}
+  .hero .kpi-card{grid-column:1/-1}
+  .statstrip{grid-template-columns:1fr 1fr}
+  .sim-grid{grid-template-columns:1fr}
+  .method-grid{grid-template-columns:1fr}
+  .scenario-cards{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+  .topbar-inner{padding:13px 16px}
+  .wrap{padding:18px 14px 50px}
+  .tabs{padding:0 14px}
+  .hero{grid-template-columns:1fr}
+  .statstrip{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .clock{display:none}
+  .cad-row{grid-template-columns:1fr;gap:10px}
+}
+.tooltip-tip{position:fixed;z-index:999;background:#05080f;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:11.5px;color:var(--txt);max-width:240px;box-shadow:var(--shadow);pointer-events:none;opacity:0;transition:opacity .15s;line-height:1.4}
+.info-i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--line);color:var(--txt-3);font-size:9px;font-weight:800;cursor:help;margin-left:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<!-- ============ TOPBAR ============ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 21V8l9-5 9 5v13" stroke="#06121e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 21v-6h10v6M9 11h6" stroke="#06121e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>Cockpit Executivo S&amp;OE</h1>
+        <div class="sub">Sales &amp; Operations Execution · Siderurgia</div>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <div class="clock">
+        <div class="time" id="clk-time">--:--:--</div>
+        <div class="date" id="clk-date">—</div>
+      </div>
+      <div class="health-chip" id="healthChip" title="Saúde composta da execução S&OE">
+        <span class="dot" id="healthDot"></span>
+        <div>
+          <div class="label">Saúde S&amp;OE</div>
+          <div><span class="val" id="healthVal">—</span> <span class="score" id="healthScore"></span></div>
+        </div>
+      </div>
+      <button class="btn" onclick="exportExcel()" title="Exportar dados para Excel">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Excel
+      </button>
+      <button class="btn primary" onclick="exportPDF()" title="Exportar visão atual em PDF">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M7 18v-2a5 5 0 0110 0v2M12 3v9m0 0l-3-3m3 3l3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        PDF
+      </button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-view="cockpit">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+      Cockpit
+    </button>
+    <button class="tab" data-view="cadencia">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Cadência Semanal
+    </button>
+    <button class="tab" data-view="excecoes">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Exceções <span class="badge" id="excBadge">0</span>
+    </button>
+    <button class="tab" data-view="simulador">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="4" cy="12" r="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="14" r="2" stroke="currentColor" stroke-width="2"/></svg>
+      Simulador
+    </button>
+    <button class="tab" data-view="metodologia">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Metodologia
+    </button>
+  </nav>
+</header>
+
+<main class="wrap">
+
+<!-- ================= COCKPIT ================= -->
+<section class="view active" id="view-cockpit">
+
+  <!-- HERO -->
+  <div class="grid hero" style="margin-bottom:18px">
+    <!-- OTIF gauge -->
+    <div class="card gauge-card">
+      <div class="ch"><div><div class="t">Nível de Serviço · OTIF<span class="info-i" data-tip="On-Time-In-Full: % de pedidos entregues completos e no prazo acordado.">i</span></div><div class="d">On-Time-In-Full agregado</div></div><span class="tag warn" id="otifTag">META 96%</span></div>
+      <div class="gauge-wrap">
+        <canvas id="gaugeOtif"></canvas>
+        <div class="gauge-center"><div class="big" id="otifBig" style="color:var(--amber)">—</div><div class="lab">OTIF Atual</div></div>
+      </div>
+      <div class="gauge-meta">
+        <div class="m"><div class="v" id="otifFill">—</div><div class="l">Fill Rate</div></div>
+        <div class="m"><div class="v" id="otifOnt">—</div><div class="l">No Prazo</div></div>
+        <div class="m"><div class="v" style="color:var(--green)">96%</div><div class="l">Meta</div></div>
+      </div>
+    </div>
+
+    <!-- Adherence gauge -->
+    <div class="card gauge-card">
+      <div class="ch"><div><div class="t">Aderência ao Plano<span class="info-i" data-tip="Produção e demanda realizadas vs. o plano S&OP travado para o período.">i</span></div><div class="d">Realizado vs. planejado</div></div><span class="tag ok" id="adhTag">META 95%</span></div>
+      <div class="gauge-wrap">
+        <canvas id="gaugeAdh"></canvas>
+        <div class="gauge-center"><div class="big" id="adhBig" style="color:var(--green)">—</div><div class="lab">Aderência</div></div>
+      </div>
+      <div class="gauge-meta">
+        <div class="m"><div class="v" id="adhDem">—</div><div class="l">Demanda</div></div>
+        <div class="m"><div class="v" id="adhProd">—</div><div class="l">Produção</div></div>
+        <div class="m"><div class="v" style="color:var(--green)">95%</div><div class="l">Meta</div></div>
+      </div>
+    </div>
+
+    <!-- KPI block -->
+    <div class="card kpi-card">
+      <div class="ch"><div><div class="t">Indicadores de Comando</div><div class="d">Leitura executiva de 10 segundos · variação vs. semana anterior</div></div></div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kl"><svg viewBox="0 0 24 24" fill="none"><path d="M20 7L9 18l-5-5" stroke="var(--cyan)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Cobertura Média</div>
+          <div class="kv" id="kpiCov">—<span class="u">dias</span></div>
+          <div class="kd up" id="kpiCovD"><span class="tri">▲</span> 1,4 d <span class="ctx">vs. 13,8 d</span></div>
+        </div>
+        <div class="kpi r">
+          <div class="kl"><svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>SKUs em Alerta</div>
+          <div class="kv" id="kpiAlert">—<span class="u">de 15</span></div>
+          <div class="kd down" id="kpiAlertD"><span class="tri">▲</span> +2 <span class="ctx">vs. 4</span></div>
+        </div>
+        <div class="kpi a">
+          <div class="kl"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12h18M12 3v18" stroke="var(--amber)" stroke-width="2" stroke-linecap="round"/></svg>Gap Dem.–Supr.</div>
+          <div class="kv" id="kpiGap">—<span class="u">kt</span></div>
+          <div class="kd up" id="kpiGapD"><span class="tri">▼</span> 0,9 kt <span class="ctx">déficit ↓</span></div>
+        </div>
+        <div class="kpi g">
+          <div class="kl"><svg viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 7-7M14 7h5v5" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>EBITDA Projetado</div>
+          <div class="kv" id="kpiEbitda">—<span class="u">M</span></div>
+          <div class="kd up" id="kpiEbitdaD"><span class="tri">▲</span> 3,2% <span class="ctx">vs. plano</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RADAR + BALANCE -->
+  <div class="grid" style="grid-template-columns:1fr 1.55fr;margin-bottom:18px">
+    <div class="card">
+      <div class="ch"><div><div class="t">Saúde S&amp;OE — Radar Multidimensional</div><div class="d">5 dimensões normalizadas (0–100) · alvo tracejado</div></div><span class="tag info" id="radarScoreTag">Score 80</span></div>
+      <div class="chart-box h-radar"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="t">Balanço Demanda × Suprimento — 8 semanas</div><div class="d">Barras agrupadas (kt) + linha de cobertura projetada (dias)</div></div><span class="tag warn">Déficit S26–S27</span></div>
+      <div class="chart-box h-bal"><canvas id="balanceChart"></canvas></div>
+      <div class="legend">
+        <div class="li"><span class="sw" style="background:var(--cyan)"></span>Demanda</div>
+        <div class="li"><span class="sw" style="background:var(--green)"></span>Suprimento</div>
+        <div class="li"><span class="sw" style="background:var(--amber)"></span>Cobertura projetada (dias)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAPACITY + FORECAST + COVERAGE -->
+  <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="card">
+      <div class="ch"><div><div class="t">Capacidade &amp; Utilização</div><div class="d">Carga vs. capacidade por linha (%)</div></div></div>
+      <div class="chart-box h-cap"><canvas id="capChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="t">Acuracidade de Previsão</div><div class="d">MAPE e viés — últimas 8 semanas</div></div><span class="tag ok">MAPE 11,4%</span></div>
+      <div class="chart-box h-fc"><canvas id="fcChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div><div class="t">Saúde de Estoque</div><div class="d">Distribuição dos SKUs por faixa de cobertura</div></div></div>
+      <div class="chart-box h-cov"><canvas id="covChart"></canvas></div>
+      <div class="legend">
+        <div class="li"><span class="sw" style="background:var(--red)"></span>Ruptura &lt;7d</div>
+        <div class="li"><span class="sw" style="background:var(--green)"></span>Saudável 7–21d</div>
+        <div class="li"><span class="sw" style="background:var(--amber)"></span>Excesso &gt;21d</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CADÊNCIA ================= -->
+<section class="view" id="view-cadencia">
+  <div class="section-head"><h2><span class="accent"></span>Cadência Semanal de Execução S&amp;OE</h2><p>Ritmo de governança do horizonte 0–13 semanas: revisões de demanda, suprimento, reconciliação e exceções. A semana corrente está destacada.</p></div>
+
+  <div class="card" style="margin-bottom:18px">
+    <div class="ch"><div><div class="t">Ciclo da Semana Corrente (S26)</div><div class="d">Progresso das quatro reuniões-âncora do ciclo semanal</div></div><span class="tag info">3 de 4 concluídas</span></div>
+    <div class="minicad" id="miniCad"></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div><div class="t">Agenda das Próximas Semanas</div><div class="d">Próximos 6 marcos do calendário S&amp;OE com responsáveis</div></div></div>
+    <div class="cadence" id="cadenceList"></div>
+  </div>
+</section>
+
+<!-- ================= EXCEÇÕES ================= -->
+<section class="view" id="view-excecoes">
+  <div class="section-head"><h2><span class="accent"></span>Gestão de Exceções &amp; Alertas</h2><p>SKUs que exigem decisão na execução: risco de ruptura, excesso de estoque, estouro de capacidade e atraso de suprimento. Busque, filtre por severidade e priorize a ação.</p></div>
+
+  <div class="exc-toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="text" id="excSearch" placeholder="Buscar por SKU, família, bitola ou tipo de exceção…">
+    </div>
+    <div class="filters" id="excFilters">
+      <button class="fbtn active" data-sev="all">Todas <span class="cnt" id="cAll">0</span></button>
+      <button class="fbtn" data-sev="crit">Crítica <span class="cnt" id="cCrit">0</span></button>
+      <button class="fbtn" data-sev="high">Alta <span class="cnt" id="cHigh">0</span></button>
+      <button class="fbtn" data-sev="low">Baixa <span class="cnt" id="cLow">0</span></button>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>SKU / Produto</th>
+          <th>Família</th>
+          <th>Exceção</th>
+          <th>Severidade</th>
+          <th class="num">Cobertura</th>
+          <th>Saúde</th>
+          <th class="num">Gap (t)</th>
+          <th>Ação Recomendada</th>
+        </tr>
+      </thead>
+      <tbody id="excBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= SIMULADOR ================= -->
+<section class="view" id="view-simulador">
+  <div class="section-head"><h2><span class="accent"></span>Simulador de Cenários — Serviço × Custo × Caixa</h2><p>Ajuste o nível de serviço-alvo, a variabilidade da demanda e o lead time. O motor recalcula estoque de segurança, cobertura, custo de estoque, EBITDA e caixa imobilizado ao vivo, e recomenda o cenário de maior score.</p></div>
+
+  <div class="grid sim-grid">
+    <div class="card">
+      <div class="ch"><div><div class="t">Parâmetros de Decisão</div><div class="d">Recálculo instantâneo</div></div></div>
+
+      <div class="ctrl">
+        <label>Nível de Serviço Alvo <span class="v" id="lblNs">95%</span></label>
+        <div class="seg" id="segNs">
+          <button data-ns="90">90%</button>
+          <button data-ns="95" class="active">95%</button>
+          <button data-ns="97">97%</button>
+          <button data-ns="99">99%</button>
+        </div>
+        <div class="hint">Define o fator Z do estoque de segurança (z·σ·√LT). Maior serviço → mais estoque → mais caixa imobilizado.</div>
+      </div>
+
+      <div class="ctrl">
+        <label>Variabilidade da Demanda (σ) <span class="v" id="lblSigma">18%</span></label>
+        <input type="range" id="rngSigma" min="6" max="40" value="18" step="1">
+        <div class="hint">Desvio-padrão da demanda semanal. Volatilidade alta exige colchão maior para o mesmo serviço.</div>
+      </div>
+
+      <div class="ctrl">
+        <label>Lead Time de Suprimento <span class="v" id="lblLt">3,0 sem</span></label>
+        <input type="range" id="rngLt" min="1" max="8" value="3" step="0.5">
+        <div class="hint">Tempo entre disparo e disponibilidade. Entra como √LT — reduzi-lo é a alavanca mais eficiente de capital de giro.</div>
+      </div>
+
+      <div class="ctrl">
+        <label>Demanda Semanal Total <span class="v green" id="lblDem">42 kt</span></label>
+        <input type="range" id="rngDem" min="28" max="60" value="42" step="1">
+        <div class="hint">Volume médio do portfólio. Escala o estoque-base e o EBITDA projetado.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div><div class="t">Cenários Avaliados</div><div class="d">Score 0–100 combina serviço, EBITDA e custo de estoque incremental</div></div></div>
+      <div class="scenario-cards" id="scnCards"></div>
+      <div class="reco-banner" id="recoBanner">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M9 21h6m-5 0v-3m4 3v-3M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2h5c0-.8.4-1.5 1-2A6 6 0 0012 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="tx"><div class="t" id="recoT">—</div><div class="d" id="recoD">—</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= METODOLOGIA ================= -->
+<section class="view" id="view-metodologia">
+  <div class="section-head"><h2><span class="accent"></span>Metodologia &amp; Fórmulas</h2><p>Como cada número é construído. Linguagem executiva, fórmulas auditáveis — para defender o painel em qualquer reunião de diretoria.</p></div>
+
+  <div class="grid method-grid">
+    <div class="card">
+      <div class="formula">
+        <h4><span class="n">1</span>Estoque de Segurança</h4>
+        <div class="eq">SS = z · σ · √LT</div>
+        <p><b>z</b> = fator de serviço (tabela abaixo); <b>σ</b> = desvio-padrão da demanda no período; <b>LT</b> = lead time de reposição em semanas. O colchão cresce com a raiz do lead time — por isso reduzir LT libera caixa de forma desproporcional.</p>
+        <table class="ztable">
+          <tr><td>Nível de Serviço 90%</td><td>z = 1,28</td></tr>
+          <tr><td>Nível de Serviço 95%</td><td>z = 1,65</td></tr>
+          <tr><td>Nível de Serviço 97%</td><td>z = 1,88</td></tr>
+          <tr><td>Nível de Serviço 99%</td><td>z = 2,33</td></tr>
+        </table>
+      </div>
+      <div class="formula">
+        <h4><span class="n">2</span>Cobertura de Estoque</h4>
+        <div class="eq">Cobertura (dias) = Estoque / Demanda diária</div>
+        <p>Quantos dias o estoque atual sustenta a demanda. Faixa saudável 7–21 dias: abaixo é risco de ruptura, acima é capital parado. É o termômetro central da saúde de estoque.</p>
+      </div>
+      <div class="formula">
+        <h4><span class="n">3</span>OTIF &amp; Fill Rate</h4>
+        <div class="eq">OTIF = % pedidos no prazo E completos</div>
+        <p>OTIF combina pontualidade (On-Time) e integridade (In-Full). O <b>Fill Rate</b> mede apenas o volume atendido vs. pedido. OTIF ≤ Fill Rate sempre, pois exige as duas condições simultâneas.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="formula">
+        <h4><span class="n">4</span>Acuracidade — MAPE &amp; Viés</h4>
+        <div class="eq">MAPE = média( |Real − Previsto| / Real ) · 100</div>
+        <p>Erro percentual absoluto médio da previsão. Quanto menor, melhor o plano. O <b>viés</b> indica direção do erro: viés positivo = subestimação sistemática (risco de ruptura); negativo = superestimação (risco de excesso).</p>
+      </div>
+      <div class="formula">
+        <h4><span class="n">5</span>Aderência ao Plano</h4>
+        <div class="eq">Aderência = Realizado / Planejado · 100</div>
+        <p>Mede disciplina de execução: o quanto demanda e produção realizadas seguiram o plano S&amp;OP travado. Próximo de 100% indica plano confiável; desvios grandes sinalizam ruído entre planejamento e chão de fábrica.</p>
+      </div>
+      <div class="formula">
+        <h4><span class="n">6</span>Score de Cenário</h4>
+        <div class="eq">Score = 0,50·Serviço + 0,30·EBITDA_n − 0,20·CustoEstoque_n</div>
+        <p>Índice 0–100 que pondera o trade-off central do S&amp;OE: <b>serviço</b> (peso 50%), <b>EBITDA projetado</b> normalizado (30%) e <b>custo de estoque incremental</b> normalizado, que penaliza (20%). O simulador recomenda automaticamente o cenário de maior score.</p>
+      </div>
+      <div class="formula">
+        <h4><span class="n">7</span>Saúde Composta S&amp;OE</h4>
+        <div class="eq">Saúde = média ponderada das 5 dimensões do radar</div>
+        <p>Serviço, Estoque, Capacidade, Acuracidade e Caixa, cada uma normalizada em 0–100. O semáforo do topo deriva deste score: <b>Verde</b> ≥ 75, <b>Amarelo</b> 60–74, <b>Vermelho</b> &lt; 60.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  <b>Cockpit Executivo S&amp;OE</b> · Dados de demonstração de uma siderúrgica · Horizonte de execução 0–13 semanas · Última sincronização: <span id="syncTime">—</span><br>
+  Painel autossuficiente · Chart.js · SheetJS · jsPDF — todos os números são ilustrativos para fins de demonstração.
+</div>
+</main>
+
+<div class="tooltip-tip" id="tooltip"></div>
+
+<script>
+/* ============================================================
+   DADOS DE DEMONSTRAÇÃO — 15 SKUs siderúrgicos
+   ============================================================ */
+const SKUS = [
+  {code:'CQ-1.20', desc:'Bobina Laminada a Quente 1,20mm', fam:'Laminados Planos', bitola:'1,20 mm', estoque:6200,  demSem:3100, lt:3.0, sigma:0.16, prod:0.97, otif:0.95},
+  {code:'CQ-2.65', desc:'Bobina Laminada a Quente 2,65mm', fam:'Laminados Planos', bitola:'2,65 mm', estoque:3100,  demSem:2600, lt:3.5, sigma:0.21, prod:0.93, otif:0.91},
+  {code:'CF-0.80', desc:'Bobina Laminada a Frio 0,80mm',   fam:'Laminados Planos', bitola:'0,80 mm', estoque:1450,  demSem:1900, lt:4.0, sigma:0.27, prod:0.89, otif:0.86},
+  {code:'GZ-0.50', desc:'Chapa Galvanizada Z275 0,50mm',   fam:'Revestidos',       bitola:'0,50 mm', estoque:980,   demSem:1700, lt:4.5, sigma:0.29, prod:0.88, otif:0.84},
+  {code:'GZ-1.00', desc:'Chapa Galvanizada Z275 1,00mm',   fam:'Revestidos',       bitola:'1,00 mm', estoque:5400,  demSem:1400, lt:4.0, sigma:0.18, prod:0.96, otif:0.97},
+  {code:'VG-8.0',  desc:'Vergalhão Nervurado CA-50 8,0mm', fam:'Longos',           bitola:'8,0 mm',  estoque:7100,  demSem:3300, lt:2.5, sigma:0.14, prod:0.98, otif:0.98},
+  {code:'VG-10.0', desc:'Vergalhão Nervurado CA-50 10mm',  fam:'Longos',           bitola:'10,0 mm', estoque:4200,  demSem:2900, lt:2.5, sigma:0.15, prod:0.97, otif:0.96},
+  {code:'VG-12.5', desc:'Vergalhão Nervurado CA-50 12,5mm',fam:'Longos',           bitola:'12,5 mm', estoque:1100,  demSem:2400, lt:3.0, sigma:0.24, prod:0.90, otif:0.87},
+  {code:'FM-6.3',  desc:'Fio-Máquina SAE 1008 6,3mm',      fam:'Longos',           bitola:'6,3 mm',  estoque:3600,  demSem:1600, lt:3.0, sigma:0.17, prod:0.95, otif:0.94},
+  {code:'PG-25',   desc:'Perfil U Gerdau 2.1/2"',          fam:'Perfis',           bitola:'2,5 pol', estoque:880,   demSem:1100, lt:3.5, sigma:0.26, prod:0.91, otif:0.88},
+  {code:'PG-40',   desc:'Perfil I 4" Estrutural',          fam:'Perfis',           bitola:'4,0 pol', estoque:2400,  demSem:950,  lt:4.0, sigma:0.19, prod:0.94, otif:0.95},
+  {code:'TB-3.0',  desc:'Tubo Costurado 3" SCH40',         fam:'Tubos',            bitola:'3,0 pol', estoque:540,   demSem:1250, lt:4.5, sigma:0.31, prod:0.85, otif:0.81},
+  {code:'TB-6.0',  desc:'Tubo Costurado 6" SCH40',         fam:'Tubos',            bitola:'6,0 pol', estoque:4900,  demSem:780,  lt:4.0, sigma:0.16, prod:0.96, otif:0.97},
+  {code:'AC-INX',  desc:'Bobina Inox 304 0,60mm',          fam:'Especiais',        bitola:'0,60 mm', estoque:1850,  demSem:620,  lt:6.0, sigma:0.23, prod:0.92, otif:0.93},
+  {code:'PL-CH50', desc:'Chapa Grossa Naval 50mm',         fam:'Chapas Grossas',   bitola:'50,0 mm', estoque:9200,  demSem:540,  lt:5.0, sigma:0.20, prod:0.95, otif:0.96}
+];
+
+// cobertura em dias = estoque / (demSem/7)
+SKUS.forEach(s=>{ s.cov = +(s.estoque/(s.demSem/7)).toFixed(1); });
+
+const Z = {90:1.28, 95:1.65, 97:1.88, 99:2.33};
+
+/* ============================================================
+   COCKPIT KPIs (derivados dos SKUs)
+   ============================================================ */
+function fmt(n,d=0){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+// alias para formatação numérica pt-BR (usado pelo simulador) — sempre vírgula decimal
+function nf(n,d=1){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+
+const totalDem = SKUS.reduce((a,s)=>a+s.demSem,0);          // kg/sem
+const totalEst = SKUS.reduce((a,s)=>a+s.estoque,0);
+const otifAgg  = SKUS.reduce((a,s)=>a+s.otif*s.demSem,0)/totalDem;
+const fillRate = Math.min(0.995, otifAgg+0.028);
+const onTime   = Math.min(0.995, otifAgg+0.015);
+const adhDem   = 0.962, adhProd = SKUS.reduce((a,s)=>a+s.prod*s.demSem,0)/totalDem;
+const adhAgg   = (adhDem+adhProd)/2;
+const covAvg   = SKUS.reduce((a,s)=>a+s.cov,0)/SKUS.length;
+const alerts   = SKUS.filter(s=>s.cov<7 || s.cov>30 || s.prod<0.9).length;
+// Balanço demanda × suprimento no nível de portfólio (kt/semana, S26 da curva abaixo).
+// Obs.: o somatório dos demSem por SKU representa a amostra de 14 itens monitorados;
+// a demanda total do portfólio é uma figura agregada de demonstração.
+const demandWk = 42.1; // kt — alinhado à 1ª barra do gráfico de balanço (S26)
+const supplyWk = 40.2; // kt
+const gapKt    = +(demandWk - supplyWk).toFixed(1); // -1,9 kt (déficit)
+const ebitda   = 184; // R$ M projetado trimestre
+
+// Health score composto (radar)
+const dimServico = Math.round(otifAgg*100*0.5 + adhAgg*100*0.5);
+const dimEstoque = 72;
+const dimCapac   = 81;
+const dimAcur    = 100-11.4*2; // ~77
+const dimCaixa   = 70;
+const healthScore = Math.round((dimServico*0.28+dimEstoque*0.22+dimCapac*0.18+dimAcur*0.16+dimCaixa*0.16));
+
+function setHealth(){
+  let cls,txt,col;
+  if(healthScore>=75){cls='green';txt='SAUDÁVEL';col='var(--green)';}
+  else if(healthScore>=60){cls='amber';txt='ATENÇÃO';col='var(--amber)';}
+  else {cls='red';txt='CRÍTICO';col='var(--red)';}
+  const dot=document.getElementById('healthDot');
+  dot.style.background=col; dot.style.boxShadow='0 0 12px '+col;
+  document.getElementById('healthVal').textContent=txt;
+  document.getElementById('healthVal').style.color=col;
+  document.getElementById('healthScore').textContent='· '+healthScore+'/100';
+  // mantém o badge do radar coerente com o score composto
+  const rTag=document.getElementById('radarScoreTag');
+  if(rTag) rTag.textContent='Score '+healthScore;
+  // cor do anel de pulso
+  dot.style.setProperty('--pc',col);
+}
+
+/* ============================================================
+   CHART.JS GLOBAL THEME
+   ============================================================ */
+function gridColor(){return 'rgba(255,255,255,0.05)';}
+function tickColor(){return '#6b7e9c';}
+Chart.defaults.font.family="'Inter',system-ui,sans-serif";
+Chart.defaults.font.size=11;
+Chart.defaults.color='#9fb0c9';
+Chart.defaults.plugins.tooltip.backgroundColor='#05080f';
+Chart.defaults.plugins.tooltip.borderColor='#22324f';
+Chart.defaults.plugins.tooltip.borderWidth=1;
+Chart.defaults.plugins.tooltip.titleColor='#e8eef7';
+Chart.defaults.plugins.tooltip.bodyColor='#9fb0c9';
+Chart.defaults.plugins.tooltip.padding=11;
+Chart.defaults.plugins.tooltip.cornerRadius=8;
+Chart.defaults.plugins.tooltip.boxPadding=5;
+
+let charts={};
+
+function gaugeChart(ctx,value,color){
+  return new Chart(ctx,{
+    type:'doughnut',
+    data:{datasets:[{
+      data:[value,100-value],
+      backgroundColor:[color,'rgba(255,255,255,0.06)'],
+      borderWidth:0,
+      circumference:270, rotation:225,
+      borderRadius:[8,0]
+    }]},
+    options:{
+      cutout:'78%', responsive:true, maintainAspectRatio:false,
+      animation:{animateRotate:true,duration:1300,easing:'easeOutQuart'},
+      plugins:{legend:{display:false},tooltip:{enabled:false}}
+    }
+  });
+}
+
+function buildCockpitCharts(){
+  // gauges
+  charts.otif=gaugeChart(document.getElementById('gaugeOtif'),+(otifAgg*100).toFixed(1),'#f9b94e');
+  charts.adh =gaugeChart(document.getElementById('gaugeAdh'),+(adhAgg*100).toFixed(1),'#34e0a1');
+
+  // radar
+  charts.radar=new Chart(document.getElementById('radarChart'),{
+    type:'radar',
+    data:{
+      labels:['Serviço','Estoque','Capacidade','Acuracidade','Caixa'],
+      datasets:[
+        {label:'Atual',data:[dimServico,dimEstoque,dimCapac,Math.round(dimAcur),dimCaixa],
+          backgroundColor:'rgba(34,211,238,0.16)',borderColor:'#22d3ee',borderWidth:2,
+          pointBackgroundColor:'#22d3ee',pointRadius:4,pointHoverRadius:6},
+        {label:'Alvo',data:[90,80,85,82,78],
+          backgroundColor:'rgba(52,224,161,0.04)',borderColor:'rgba(52,224,161,0.55)',
+          borderWidth:1.5,borderDash:[5,4],pointRadius:0}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{r:{
+        min:0,max:100,
+        grid:{color:'rgba(255,255,255,0.06)'},
+        angleLines:{color:'rgba(255,255,255,0.06)'},
+        pointLabels:{color:'#c3d0e4',font:{size:12,weight:'600'}},
+        ticks:{display:false,stepSize:25}
+      }},
+      plugins:{legend:{display:true,position:'bottom',labels:{padding:14,boxWidth:12,usePointStyle:true,pointStyle:'circle'}}}
+    }
+  });
+
+  // balance dem x sup
+  const wks=['S26','S27','S28','S29','S30','S31','S32','S33'];
+  const dem=[42.1,43.6,41.2,40.0,42.8,44.1,43.0,41.5];
+  const sup=[40.2,41.1,41.8,41.0,43.2,44.0,43.5,42.0];
+  const covProj=[12.4,11.2,11.8,12.5,12.9,12.7,13.0,13.4];
+  charts.balance=new Chart(document.getElementById('balanceChart'),{
+    data:{labels:wks,datasets:[
+      {type:'bar',label:'Demanda (kt)',data:dem,backgroundColor:'#22d3ee',borderRadius:5,barPercentage:.72,categoryPercentage:.7,yAxisID:'y'},
+      {type:'bar',label:'Suprimento (kt)',data:sup,backgroundColor:'#34e0a1',borderRadius:5,barPercentage:.72,categoryPercentage:.7,yAxisID:'y'},
+      {type:'line',label:'Cobertura (dias)',data:covProj,borderColor:'#f9b94e',backgroundColor:'rgba(249,185,78,.1)',
+        borderWidth:2.5,tension:.4,pointRadius:3,pointBackgroundColor:'#f9b94e',yAxisID:'y1',fill:true}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9fb0c9',font:{weight:'600'}}},
+        y:{position:'left',min:35,grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'kt/semana',color:'#6b7e9c'}},
+        y1:{position:'right',min:0,max:20,grid:{drawOnChartArea:false},title:{display:true,text:'dias',color:'#6b7e9c'}}
+      },
+      plugins:{legend:{display:false}}
+    }
+  });
+
+  // capacity
+  charts.cap=new Chart(document.getElementById('capChart'),{
+    type:'bar',
+    data:{
+      labels:[['Laminação','Quente'],['Laminação','Frio'],['Galvanização'],['Aciaria','Longos'],['Trefila /','Tubos']],
+      datasets:[{
+        label:'Utilização (%)',
+        data:[94,88,82,97,79],
+        backgroundColor:['#34e0a1','#34e0a1','#22d3ee','#fb6f72','#22d3ee'],
+        borderRadius:6,barPercentage:.65
+      }]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      scales:{
+        x:{min:0,max:110,grid:{color:'rgba(255,255,255,0.05)'},ticks:{callback:v=>v+'%'}},
+        y:{grid:{display:false},ticks:{color:'#c3d0e4',font:{size:10}}}
+      },
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>'Utilização: '+c.parsed.x+'%'+(c.parsed.x>95?'  ⚠ estouro':'')}}}
+    }
+  });
+
+  // forecast MAPE + bias
+  const fwk=['S19','S20','S21','S22','S23','S24','S25','S26'];
+  charts.fc=new Chart(document.getElementById('fcChart'),{
+    data:{labels:fwk,datasets:[
+      {type:'line',label:'MAPE (%)',data:[15.2,14.1,13.8,12.9,12.2,11.9,11.6,11.4],
+        borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.12)',borderWidth:2.5,tension:.4,
+        pointRadius:3,pointBackgroundColor:'#22d3ee',fill:true,yAxisID:'y'},
+      {type:'bar',label:'Viés (%)',data:[3.1,-1.2,2.4,-0.8,1.6,-1.9,0.9,-1.4],
+        backgroundColor:c=>c.parsed&&c.parsed.y<0?'#fb6f72':'#34e0a1',
+        borderRadius:4,barPercentage:.5,yAxisID:'y1'}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9fb0c9',font:{size:10}}},
+        y:{position:'left',min:0,max:20,grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'MAPE %',color:'#6b7e9c'}},
+        y1:{position:'right',min:-6,max:6,grid:{drawOnChartArea:false},title:{display:true,text:'viés %',color:'#6b7e9c'}}
+      },
+      plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,padding:12,usePointStyle:true,pointStyle:'circle'}}}
+    }
+  });
+
+  // coverage health distribution
+  const rupt=SKUS.filter(s=>s.cov<7).length;
+  const heal=SKUS.filter(s=>s.cov>=7&&s.cov<=21).length;
+  const exc =SKUS.filter(s=>s.cov>21).length;
+  charts.cov=new Chart(document.getElementById('covChart'),{
+    type:'doughnut',
+    data:{labels:['Ruptura <7d','Saudável 7–21d','Excesso >21d'],
+      datasets:[{data:[rupt,heal,exc],backgroundColor:['#fb6f72','#34e0a1','#f9b94e'],borderWidth:0,hoverOffset:8}]},
+    options:{
+      cutout:'62%',responsive:true,maintainAspectRatio:false,
+      animation:{animateRotate:true,duration:1100},
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>c.label+': '+c.parsed+' SKUs'}}}
+    }
+  });
+}
+
+/* ============================================================
+   POPULAR KPIs DE TEXTO
+   ============================================================ */
+function fillKpis(){
+  document.getElementById('otifBig').textContent=(otifAgg*100).toFixed(1)+'%';
+  document.getElementById('otifFill').textContent=(fillRate*100).toFixed(1)+'%';
+  document.getElementById('otifOnt').textContent=(onTime*100).toFixed(1)+'%';
+  document.getElementById('otifTag').className='tag '+(otifAgg>=0.96?'ok':'warn');
+
+  document.getElementById('adhBig').textContent=(adhAgg*100).toFixed(1)+'%';
+  document.getElementById('adhDem').textContent=(adhDem*100).toFixed(1)+'%';
+  document.getElementById('adhProd').textContent=(adhProd*100).toFixed(1)+'%';
+  document.getElementById('adhTag').className='tag '+(adhAgg>=0.95?'ok':'warn');
+
+  document.getElementById('kpiCov').innerHTML=fmt(covAvg,1)+'<span class="u">dias</span>';
+  document.getElementById('kpiAlert').innerHTML=alerts+'<span class="u">de '+SKUS.length+'</span>';
+  document.getElementById('kpiGap').innerHTML=(gapKt<0?gapKt.toFixed(1):'+'+gapKt.toFixed(1)).replace('.',',')+'<span class="u">kt</span>';
+  document.getElementById('kpiEbitda').innerHTML='R$'+ebitda+'<span class="u">M</span>';
+
+  document.getElementById('excBadge').textContent=alerts;
+}
+
+/* ============================================================
+   CADÊNCIA SEMANAL
+   ============================================================ */
+const miniSteps=[
+  {wk:'Seg',lab:'Demand Review',pct:100,status:'done'},
+  {wk:'Ter',lab:'Supply Review',pct:100,status:'done'},
+  {wk:'Qua',lab:'Reconciliação',pct:100,status:'done'},
+  {wk:'Sex',lab:'Exception Review',pct:35,status:'now'}
+];
+function buildMiniCad(){
+  const el=document.getElementById('miniCad');
+  el.innerHTML=miniSteps.map(s=>{
+    let pill = s.status==='done'?'<span class="pill" style="background:var(--green-soft);color:var(--green)">Concluída</span>'
+            : s.status==='now'?'<span class="pill" style="background:var(--cyan-soft);color:var(--cyan)">Em andamento</span>'
+            :'<span class="pill" style="background:var(--line);color:var(--txt-3)">Agendada</span>';
+    return `<div class="step ${s.status==='future'?'future':''}">
+      <div class="bar"><i style="width:${s.pct}%"></i></div>
+      <div class="wk">${s.wk}</div><div class="lab">${s.lab}</div>${pill}
+    </div>`;
+  }).join('');
+}
+
+const cadEvents=[
+  {wk:'S26',dt:'23–27 Jun',now:true,evs:[
+    {nm:'Exception Review',ow:'Diretor S&OE',ic:'alert',col:'amber',done:false},
+  ]},
+  {wk:'S27',dt:'30 Jun–04 Jul',now:false,evs:[
+    {nm:'Demand Review',ow:'Comercial & Marketing',ic:'demand',col:'cyan',done:false},
+    {nm:'Supply Review',ow:'Industrial & Logística',ic:'supply',col:'green',done:false},
+  ]},
+  {wk:'S28',dt:'07–11 Jul',now:false,evs:[
+    {nm:'Reconciliação D×S',ow:'PCP / S&OP',ic:'recon',col:'violet',done:false},
+    {nm:'Pré-S&OP Executivo',ow:'Diretoria',ic:'exec',col:'cyan',done:false},
+  ]},
+  {wk:'S29',dt:'14–18 Jul',now:false,evs:[
+    {nm:'Exception Review',ow:'Diretor S&OE',ic:'alert',col:'amber',done:false},
+    {nm:'Revisão de Capacidade',ow:'Engenharia Industrial',ic:'supply',col:'green',done:false},
+  ]},
+  {wk:'S30',dt:'21–25 Jul',now:false,evs:[
+    {nm:'Demand Review',ow:'Comercial & Marketing',ic:'demand',col:'cyan',done:false},
+    {nm:'Fechamento Mensal S&OP',ow:'CFO / Diretoria',ic:'exec',col:'cyan',done:false},
+  ]},
+  {wk:'S31',dt:'28 Jul–01 Ago',now:false,evs:[
+    {nm:'Reconciliação D×S',ow:'PCP / S&OP',ic:'recon',col:'violet',done:false},
+  ]},
+];
+const cadIcons={
+  demand:'<path d="M3 3v18h18M7 14l4-4 4 4 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  supply:'<path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  recon:'<path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  alert:'<path d="M12 9v4m0 4h.01M10.3 3.9L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  exec:'<path d="M2 20h20M4 20V8l8-5 8 5v12M9 20v-6h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+};
+const colMap={cyan:'var(--cyan)',green:'var(--green)',amber:'var(--amber)',violet:'var(--violet)',red:'var(--red)'};
+const colSoft={cyan:'var(--cyan-soft)',green:'var(--green-soft)',amber:'var(--amber-soft)',violet:'rgba(167,139,250,.14)',red:'var(--red-soft)'};
+
+function buildCadence(){
+  const el=document.getElementById('cadenceList');
+  el.innerHTML=cadEvents.map(w=>`
+    <div class="cad-row">
+      <div class="cad-week">
+        <div class="wk">${w.wk}</div><div class="dt">${w.dt}</div>
+        ${w.now?'<div class="now">● Semana Atual</div>':''}
+      </div>
+      <div class="cad-events">
+        ${w.evs.map(e=>`
+          <div class="cad-ev ${e.done?'done':''}">
+            <div class="ic" style="background:${colSoft[e.col]};color:${colMap[e.col]}">
+              <svg viewBox="0 0 24 24" fill="none">${cadIcons[e.ic]}</svg>
+            </div>
+            <div class="meta"><div class="nm">${e.nm}</div><div class="ow">${e.ow}</div></div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   EXCEÇÕES
+   ============================================================ */
+function buildExceptions(){
+  const rows=[];
+  SKUS.forEach(s=>{
+    let exc=null,sev=null,action=null,gap=0;
+    if(s.cov<7){exc='Risco de ruptura';sev='crit';gap=Math.round((7-s.cov)*s.demSem/7);action='Acelerar produção / transferência entre plantas';}
+    else if(s.cov<10 && s.prod<0.9){exc='Atraso de suprimento';sev='high';gap=Math.round((s.demSem*(1-s.prod)));action='Revisar sequenciamento e priorizar ordem';}
+    else if(s.cov>30){exc='Excesso de estoque';sev='high';gap=Math.round((s.cov-21)*s.demSem/7);action='Promoção / realocar capital de giro';}
+    else if(s.prod<0.9){exc='Aderência de produção baixa';sev='high';gap=Math.round(s.demSem*(1-s.prod));action='Plano de recuperação de produção';}
+    else if(s.cov>21){exc='Cobertura elevada';sev='low';gap=Math.round((s.cov-21)*s.demSem/7);action='Monitorar — desacelerar próximo lote';}
+    else if(s.otif<0.9){exc='OTIF abaixo da meta';sev='low';gap=0;action='Auditar janela de entrega logística';}
+    if(exc) rows.push({...s,exc,sev,action,gap});
+  });
+  // ordem por severidade
+  const ord={crit:0,high:1,low:2};
+  rows.sort((a,b)=>ord[a.sev]-ord[b.sev]||a.cov-b.cov);
+  EXC_ROWS=rows;
+  // counters
+  document.getElementById('cAll').textContent=rows.length;
+  document.getElementById('cCrit').textContent=rows.filter(r=>r.sev==='crit').length;
+  document.getElementById('cHigh').textContent=rows.filter(r=>r.sev==='high').length;
+  document.getElementById('cLow').textContent=rows.filter(r=>r.sev==='low').length;
+  renderExc();
+}
+let EXC_ROWS=[],EXC_SEV='all',EXC_Q='';
+function covColor(c){return c<7?'var(--red)':c>21?'var(--amber)':'var(--green)';}
+function renderExc(){
+  const tb=document.getElementById('excBody');
+  const q=EXC_Q.toLowerCase();
+  const list=EXC_ROWS.filter(r=>
+    (EXC_SEV==='all'||r.sev===EXC_SEV)&&
+    (!q||(r.code+r.desc+r.fam+r.bitola+r.exc).toLowerCase().includes(q))
+  );
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:34px;color:var(--txt-3)">Nenhuma exceção encontrada para este filtro.</td></tr>';return;}
+  const sevLab={crit:'Crítica',high:'Alta',low:'Baixa'};
+  const healthPct=c=>Math.max(6,Math.min(100,Math.round(c/30*100)));
+  tb.innerHTML=list.map(r=>`
+    <tr>
+      <td><div class="sku-cell"><span class="code">${r.code}</span><span class="desc">${r.desc}</span></div></td>
+      <td style="color:var(--txt-2)">${r.fam}<div style="font-size:10px;color:var(--txt-3)">${r.bitola}</div></td>
+      <td style="font-weight:600">${r.exc}</td>
+      <td><span class="sev ${r.sev}"><span class="d"></span>${sevLab[r.sev]}</span></td>
+      <td class="num"><span class="cov-pill" style="color:${covColor(r.cov)}">${fmt(r.cov,1)} d</span></td>
+      <td><div class="bar-cell"><div class="track"><i style="width:${healthPct(r.cov)}%;background:${covColor(r.cov)}"></i></div></div></td>
+      <td class="num">${r.gap>0?fmt(r.gap):'—'}</td>
+      <td style="color:var(--txt-2);font-size:11.5px;max-width:230px">${r.action}</td>
+    </tr>`).join('');
+}
+
+/* ============================================================
+   SIMULADOR
+   ============================================================ */
+let SIM={ns:95,sigma:18,lt:3,dem:42};
+function calcScenario(ns,sigmaPct,lt,demKt){
+  const z=Z[ns];
+  const sigma=demKt*sigmaPct/100;          // kt
+  const ss=z*sigma*Math.sqrt(lt);          // estoque segurança kt
+  const cycleStock=demKt*lt/2;             // estoque ciclo
+  const totalStock=ss+cycleStock;          // kt
+  const cov=totalStock/(demKt/7);          // dias
+  const unitPrice=3100;                    // R$/t — preço médio do portfólio
+  const stockCostRate=682;                 // R$/t/ano — custo de manter (~22% do valor/ano)
+  const stockCost=totalStock*1000*stockCostRate/1e6; // R$ M/ano (custo de carregamento)
+  const workingCapital=totalStock*1000*unitPrice/1e6;// R$ M caixa imobilizado no estoque
+  // serviço esperado ~ ns mas penalizado por lt alto/sigma alto
+  const service=Math.min(99.5, ns - Math.max(0,(lt-3))*0.4 - Math.max(0,(sigmaPct-18))*0.08);
+  // EBITDA: serviço maior => menos perda de venda; custo de carregamento penaliza
+  const baseEbitda=70;                       // R$ M base
+  const ebitdaM=baseEbitda + (service-92)*3.4 - stockCost*0.55;
+  return {ns,z,ss,totalStock,cov,stockCost,workingCapital,service,ebitdaM};
+}
+function buildScenarios(){
+  // três cenários: serviço 99, rentabilidade (95 enxuto), equilibrio (97)
+  const A=calcScenario(99,SIM.sigma,SIM.lt,SIM.dem);  A.name='Serviço 99%'; A.desc='Máxima disponibilidade';
+  const B=calcScenario(90,SIM.sigma,Math.max(1,SIM.lt-0.5),SIM.dem); B.name='Rentabilidade'; B.desc='Estoque enxuto, caixa liberado';
+  const C=calcScenario(97,SIM.sigma,SIM.lt,SIM.dem);  C.name='Equilíbrio'; C.desc='Trade-off otimizado';
+  const all=[A,B,C];
+  // normalizar p/ score
+  const maxEb=Math.max(...all.map(s=>s.ebitdaM)), minEb=Math.min(...all.map(s=>s.ebitdaM));
+  const maxCost=Math.max(...all.map(s=>s.stockCost)), minCost=Math.min(...all.map(s=>s.stockCost));
+  all.forEach(s=>{
+    const ebN=maxEb===minEb?100:(s.ebitdaM-minEb)/(maxEb-minEb)*100;
+    const costN=maxCost===minCost?0:(s.stockCost-minCost)/(maxCost-minCost)*100;
+    s.score=Math.round(0.50*s.service + 0.30*ebN - 0.20*costN);
+    s.score=Math.max(0,Math.min(100,s.score));
+  });
+  const best=all.reduce((a,b)=>b.score>a.score?b:a);
+  SIM_BEST=best;
+  const el=document.getElementById('scnCards');
+  el.innerHTML=all.map(s=>`
+    <div class="scn ${s===best?'best':''}">
+      ${s===best?'<div class="reco">★ Recomendado</div>':''}
+      <h4>${s.name}</h4><div class="sd">${s.desc}</div>
+      <div class="scorewrap"><div class="score" style="color:${s===best?'var(--green)':'var(--txt)'}">${s.score}</div><div class="score-lab">SCORE<br>0–100</div></div>
+      <div class="rows">
+        <div class="r"><span class="k">Serviço esperado</span><span class="v">${nf(s.service,1)}%</span></div>
+        <div class="r"><span class="k">Cobertura</span><span class="v">${nf(s.cov,1)} d</span></div>
+        <div class="r"><span class="k">Estoque total</span><span class="v">${nf(s.totalStock,1)} kt</span></div>
+        <div class="r"><span class="k">Custo estoque</span><span class="v">R$ ${nf(s.stockCost,1)} M</span></div>
+        <div class="r"><span class="k">Caixa imobilizado</span><span class="v">R$ ${nf(s.workingCapital,0)} M</span></div>
+        <div class="r"><span class="k">EBITDA projetado</span><span class="v" style="color:${s.ebitdaM>=0?'var(--green)':'var(--red)'}">R$ ${nf(s.ebitdaM,1)} M</span></div>
+      </div>
+      <div class="scorebar"><i style="width:${s.score}%"></i></div>
+    </div>`).join('');
+  document.getElementById('recoT').textContent='Recomendação automática: '+best.name+' (score '+best.score+')';
+  document.getElementById('recoD').innerHTML=
+    `Maior score no trade-off serviço × custo × caixa. Entrega <b>${nf(best.service,1)}%</b> de serviço com cobertura de <b>${nf(best.cov,1)} dias</b>, `+
+    `imobilizando <b>R$ ${nf(best.workingCapital,0)} M</b> em capital de giro e projetando <b>R$ ${nf(best.ebitdaM,1)} M</b> de EBITDA.`;
+}
+let SIM_BEST=null;
+
+function bindSimulator(){
+  // segmented NS
+  document.querySelectorAll('#segNs button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('#segNs button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      SIM.ns=+b.dataset.ns;
+      document.getElementById('lblNs').textContent=SIM.ns+'%';
+      buildScenarios();
+    });
+  });
+  const rs=document.getElementById('rngSigma');
+  rs.addEventListener('input',()=>{SIM.sigma=+rs.value;document.getElementById('lblSigma').textContent=SIM.sigma+'%';buildScenarios();});
+  const rl=document.getElementById('rngLt');
+  rl.addEventListener('input',()=>{SIM.lt=+rl.value;document.getElementById('lblLt').textContent=SIM.lt.toFixed(1).replace('.',',')+' sem';buildScenarios();});
+  const rd=document.getElementById('rngDem');
+  rd.addEventListener('input',()=>{SIM.dem=+rd.value;document.getElementById('lblDem').textContent=SIM.dem+' kt';buildScenarios();});
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+function bindTabs(){
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('view-'+t.dataset.view).classList.add('active');
+      // resize charts when revealed
+      setTimeout(()=>Object.values(charts).forEach(c=>{try{c.resize();}catch(e){}}),60);
+    });
+  });
+}
+
+/* ============================================================
+   EXCEPTION FILTERS
+   ============================================================ */
+function bindExcFilters(){
+  document.querySelectorAll('#excFilters .fbtn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('#excFilters .fbtn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active'); EXC_SEV=b.dataset.sev; renderExc();
+    });
+  });
+  document.getElementById('excSearch').addEventListener('input',e=>{EXC_Q=e.target.value;renderExc();});
+}
+
+/* ============================================================
+   CLOCK
+   ============================================================ */
+function tick(){
+  const d=new Date();
+  const dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('clk-time').textContent=d.toLocaleTimeString('pt-BR');
+  document.getElementById('clk-date').textContent=dias[d.getDay()]+', '+d.getDate()+' '+meses[d.getMonth()];
+  const sync=document.getElementById('syncTime');
+  if(sync)sync.textContent=d.toLocaleString('pt-BR');
+}
+
+/* ============================================================
+   TOOLTIPS
+   ============================================================ */
+function bindTooltips(){
+  const tip=document.getElementById('tooltip');
+  document.querySelectorAll('[data-tip]').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{tip.textContent=el.dataset.tip;tip.style.opacity='1';});
+    el.addEventListener('mousemove',e=>{tip.style.left=Math.min(e.clientX+14,window.innerWidth-260)+'px';tip.style.top=(e.clientY+14)+'px';});
+    el.addEventListener('mouseleave',()=>{tip.style.opacity='0';});
+  });
+}
+
+/* ============================================================
+   EXPORTS
+   ============================================================ */
+function exportExcel(){
+  try{
+    const wb=XLSX.utils.book_new();
+    const skuData=SKUS.map(s=>({SKU:s.code,Produto:s.desc,Familia:s.fam,Bitola:s.bitola,
+      'Estoque (t)':s.estoque,'Demanda/sem (t)':s.demSem,'Cobertura (dias)':s.cov,
+      'OTIF':+(s.otif*100).toFixed(1),'Aderência Prod':+(s.prod*100).toFixed(1),'Lead Time (sem)':s.lt}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(skuData),'SKUs');
+    const excData=EXC_ROWS.map(r=>({SKU:r.code,Produto:r.desc,Excecao:r.exc,
+      Severidade:r.sev,'Cobertura (d)':r.cov,'Gap (t)':r.gap,Acao:r.action}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(excData),'Excecoes');
+    const kpi=[{KPI:'OTIF',Valor:(otifAgg*100).toFixed(1)+'%'},{KPI:'Aderência',Valor:(adhAgg*100).toFixed(1)+'%'},
+      {KPI:'Cobertura média',Valor:covAvg.toFixed(1)+' dias'},{KPI:'SKUs em alerta',Valor:alerts},
+      {KPI:'Gap Dem-Sup',Valor:gapKt+' kt'},{KPI:'EBITDA projetado',Valor:'R$'+ebitda+' M'},
+      {KPI:'Health Score',Valor:healthScore+'/100'}];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(kpi),'KPIs');
+    XLSX.writeFile(wb,'Cockpit_SOE_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  }catch(e){alert('Erro ao exportar Excel: '+e.message);}
+}
+function exportPDF(){
+  const active=document.querySelector('.view.active');
+  const btns=document.querySelectorAll('.btn');
+  btns.forEach(b=>b.style.visibility='hidden');
+  html2canvas(active,{backgroundColor:'#0b1220',scale:2,useCORS:true}).then(canvas=>{
+    btns.forEach(b=>b.style.visibility='visible');
+    const {jsPDF}=window.jspdf;
+    const img=canvas.toDataURL('image/png');
+    const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+    const ratio=Math.min(pw/canvas.width,ph/canvas.height);
+    const w=canvas.width*ratio, h=canvas.height*ratio;
+    pdf.addImage(img,'PNG',(pw-w)/2,6,w,h);
+    pdf.save('Cockpit_SOE_'+new Date().toISOString().slice(0,10)+'.pdf');
+  }).catch(e=>{btns.forEach(b=>b.style.visibility='visible');alert('Erro ao gerar PDF: '+e.message);});
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+  setHealth();
+  fillKpis();
+  buildCockpitCharts();
+  buildMiniCad();
+  buildCadence();
+  buildExceptions();
+  buildScenarios();
+  bindSimulator();
+  bindTabs();
+  bindExcFilters();
+  bindTooltips();
+  tick(); setInterval(tick,1000);
+});
+</script>
+</body>
+</html>

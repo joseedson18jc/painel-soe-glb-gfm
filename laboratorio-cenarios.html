@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Laboratório de Cenários S&OE — Painel Analítico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --bg-2:#0e1424;
+    --panel:#121a2e;
+    --panel-2:#16203a;
+    --panel-hover:#1b2747;
+    --line:#22304f;
+    --line-soft:#1a2540;
+    --txt:#eaf0ff;
+    --txt-2:#9fb0d4;
+    --txt-3:#697699;
+    --violet:#8b5cf6;
+    --violet-2:#a78bfa;
+    --blue:#3b82f6;
+    --cyan:#22d3ee;
+    --green:#34d399;
+    --green-2:#10b981;
+    --amber:#fbbf24;
+    --red:#f87171;
+    --pink:#f472b6;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+    --shadow-soft:0 4px 18px rgba(0,0,0,.30);
+    --r:18px;
+    --r-sm:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,'Segoe UI',Roboto,sans-serif;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(139,92,246,.16), transparent 60%),
+      radial-gradient(1000px 600px at 100% 0%, rgba(34,211,238,.10), transparent 55%),
+      radial-gradient(900px 700px at 50% 120%, rgba(52,211,153,.08), transparent 60%),
+      var(--bg);
+    color:var(--txt);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.45;
+  }
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  ::selection{background:rgba(139,92,246,.35)}
+  a{color:var(--violet-2);text-decoration:none}
+
+  /* ---------- Layout ---------- */
+  .wrap{max-width:1340px;margin:0 auto;padding:22px 26px 70px}
+
+  /* ---------- Header ---------- */
+  header.topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    flex-wrap:wrap;padding:14px 0 18px;border-bottom:1px solid var(--line-soft);
+  }
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{
+    width:50px;height:50px;border-radius:14px;flex:0 0 auto;
+    background:linear-gradient(140deg,var(--violet),var(--blue) 55%,var(--cyan));
+    display:grid;place-items:center;box-shadow:0 8px 26px rgba(99,102,241,.45);
+  }
+  .logo svg{width:28px;height:28px}
+  .brand h1{font-size:1.18rem;font-weight:700;letter-spacing:-.02em}
+  .brand .sub{font-size:.74rem;color:var(--txt-2);font-weight:500;letter-spacing:.02em;margin-top:2px}
+  .brand .tag{
+    display:inline-block;margin-top:5px;font-size:.62rem;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--violet-2);
+    background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);
+    padding:2px 9px;border-radius:30px;
+  }
+  .topright{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .clock{text-align:right}
+  .clock .time{font-size:1.32rem;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  .clock .date{font-size:.72rem;color:var(--txt-2);text-transform:capitalize}
+  .pulse{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;color:var(--green);font-weight:600}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+  .btn{
+    font-family:inherit;font-size:.76rem;font-weight:600;color:var(--txt);cursor:pointer;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 13px;
+    display:inline-flex;align-items:center;gap:7px;transition:.18s;
+  }
+  .btn:hover{background:var(--panel-hover);border-color:var(--violet);transform:translateY(-1px)}
+  .btn:focus-visible{outline:2px solid var(--violet-2);outline-offset:2px}
+  .btn svg{width:15px;height:15px}
+  .btn.primary{background:linear-gradient(135deg,var(--violet),var(--blue));border:none}
+  .btn.primary:hover{filter:brightness(1.08)}
+
+  /* ---------- Tabs ---------- */
+  nav.tabs{
+    display:flex;gap:6px;margin:22px 0 26px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:16px;padding:7px;
+    box-shadow:var(--shadow-soft);
+  }
+  .tab{
+    font-family:inherit;font-size:.82rem;font-weight:600;color:var(--txt-2);cursor:pointer;
+    background:transparent;border:none;border-radius:11px;padding:11px 17px;transition:.18s;
+    display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  }
+  .tab svg{width:16px;height:16px;opacity:.85}
+  .tab:hover{color:var(--txt);background:var(--panel-2)}
+  .tab.active{color:#fff;background:linear-gradient(135deg,rgba(139,92,246,.9),rgba(59,130,246,.9));box-shadow:0 6px 18px rgba(99,102,241,.35)}
+  .tab:focus-visible{outline:2px solid var(--violet-2);outline-offset:2px}
+
+  /* ---------- Sections ---------- */
+  .view{display:none;animation:fade .4s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .section-head{margin:6px 0 16px}
+  .section-head h2{font-size:1.18rem;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .section-head p{font-size:.82rem;color:var(--txt-2);margin-top:3px;max-width:760px}
+  .accent-bar{width:4px;height:20px;border-radius:4px;background:linear-gradient(var(--violet),var(--cyan))}
+
+  /* ---------- KPI grid ---------- */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:22px}
+  .kpi{
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 16px;position:relative;overflow:hidden;
+    transition:.22s;box-shadow:var(--shadow-soft);
+  }
+  .kpi:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.5);box-shadow:var(--shadow)}
+  .kpi::after{content:"";position:absolute;inset:0;border-radius:var(--r);pointer-events:none;
+    background:radial-gradient(120px 60px at 100% 0,var(--glow,rgba(139,92,246,.16)),transparent 70%)}
+  .kpi .klabel{font-size:.72rem;color:var(--txt-2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:7px}
+  .kpi .kicon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(139,92,246,.14);position:absolute;top:16px;right:16px}
+  .kpi .kicon svg{width:16px;height:16px}
+  .kpi .kval{font-size:1.85rem;font-weight:800;letter-spacing:-.02em;margin-top:12px;font-variant-numeric:tabular-nums}
+  .kpi .kval small{font-size:.95rem;font-weight:600;color:var(--txt-2)}
+  .kpi .kdelta{font-size:.73rem;font-weight:600;margin-top:5px;display:flex;align-items:center;gap:5px}
+  .up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--txt-2)}
+  .kpi .kbar{height:5px;border-radius:5px;background:var(--line);margin-top:11px;overflow:hidden}
+  .kpi .kbar i{display:block;height:100%;border-radius:5px;transition:width 1s ease}
+
+  /* ---------- Cards / Panels ---------- */
+  .card{
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);
+    padding:20px;box-shadow:var(--shadow-soft);
+  }
+  .card h3{font-size:.98rem;font-weight:700;display:flex;align-items:center;gap:9px;letter-spacing:-.01em}
+  .card .hint{font-size:.75rem;color:var(--txt-2);margin-top:2px}
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .grid-12-8{display:grid;grid-template-columns:1.5fr 1fr;gap:18px}
+  .grid-8-12{display:grid;grid-template-columns:1fr 1.5fr;gap:18px}
+  .mb{margin-bottom:18px}
+  .chart-box{position:relative;width:100%}
+  .badge{font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:30px;letter-spacing:.03em;white-space:nowrap}
+  .b-green{background:rgba(52,211,153,.14);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+  .b-amber{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+  .b-red{background:rgba(248,113,113,.14);color:var(--red);border:1px solid rgba(248,113,113,.32)}
+  .b-violet{background:rgba(139,92,246,.16);color:var(--violet-2);border:1px solid rgba(139,92,246,.35)}
+  .b-blue{background:rgba(59,130,246,.14);color:#7eacff;border:1px solid rgba(59,130,246,.3)}
+
+  /* ---------- Toolbar / filtros ---------- */
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+  .search{position:relative;flex:1;min-width:220px}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--txt-3)}
+  .search input{
+    width:100%;font-family:inherit;font-size:.84rem;color:var(--txt);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px 11px 36px;transition:.18s;
+  }
+  .search input:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+  select.filt{
+    font-family:inherit;font-size:.82rem;color:var(--txt);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:11px;padding:11px 14px;cursor:pointer;transition:.18s;
+  }
+  select.filt:focus{outline:none;border-color:var(--violet)}
+
+  /* ---------- Table ---------- */
+  .tbl-wrap{overflow-x:auto;border-radius:var(--r-sm)}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  thead th{
+    text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--txt-2);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;
+    position:sticky;top:0;background:var(--panel);cursor:pointer;user-select:none;
+  }
+  thead th:hover{color:var(--txt)}
+  thead th.num,tbody td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--line-soft);color:var(--txt)}
+  tbody tr{transition:.12s}
+  tbody tr:hover{background:var(--panel-2)}
+  .sku-name{font-weight:600}
+  .sku-fam{font-size:.7rem;color:var(--txt-3)}
+  .mini-bar{height:6px;width:70px;border-radius:6px;background:var(--line);display:inline-block;vertical-align:middle;overflow:hidden}
+  .mini-bar i{display:block;height:100%;border-radius:6px}
+  .pill{font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:7px}
+
+  /* ---------- Scenario cards ---------- */
+  .scen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+  .scen{
+    background:linear-gradient(165deg,var(--panel-2),var(--panel));border:1px solid var(--line);
+    border-radius:var(--r);padding:18px;position:relative;transition:.22s;overflow:hidden;
+  }
+  .scen:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+  .scen.reco{border-color:var(--green-2);box-shadow:0 0 0 1px rgba(52,211,153,.4),0 14px 40px rgba(16,185,129,.18)}
+  .scen .crown{position:absolute;top:-1px;right:-1px;font-size:.6rem;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;background:linear-gradient(135deg,var(--green-2),var(--cyan));color:#04210f;
+    padding:5px 12px;border-bottom-left-radius:12px}
+  .scen h4{font-size:.92rem;font-weight:700;display:flex;align-items:center;gap:8px}
+  .scen .stype{font-size:.7rem;color:var(--txt-2);margin-top:1px}
+  .scen .score-ring{display:flex;align-items:center;gap:13px;margin:14px 0 6px}
+  .ring{position:relative;width:62px;height:62px;flex:0 0 auto}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rv{position:absolute;inset:0;display:grid;place-items:center;font-size:1.02rem;font-weight:800}
+  .scen ul{list-style:none;margin-top:10px;display:grid;gap:7px}
+  .scen li{display:flex;justify-content:space-between;font-size:.78rem;color:var(--txt-2)}
+  .scen li b{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+
+  /* ---------- Sliders ---------- */
+  .sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px 26px}
+  .slider-unit label{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;font-weight:600;margin-bottom:9px}
+  .slider-unit label .v{font-size:.95rem;font-weight:800;color:var(--violet-2);font-variant-numeric:tabular-nums}
+  .slider-unit .desc{font-size:.7rem;color:var(--txt-3);margin-top:7px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;
+    background:linear-gradient(90deg,var(--violet) var(--p,50%),var(--line) var(--p,50%));outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:#fff;border:3px solid var(--violet);box-shadow:0 2px 8px rgba(0,0,0,.4);transition:.12s}
+  input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18);border-color:var(--cyan)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--violet);cursor:pointer}
+  input[type=range]:focus-visible{outline:2px solid var(--violet-2);outline-offset:4px}
+
+  .reco-banner{
+    display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,rgba(16,185,129,.16),rgba(34,211,238,.08));
+    border:1px solid rgba(52,211,153,.4);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;
+  }
+  .reco-banner .ri{width:42px;height:42px;border-radius:12px;background:rgba(52,211,153,.2);display:grid;place-items:center;flex:0 0 auto}
+  .reco-banner .ri svg{width:22px;height:22px;color:var(--green)}
+  .reco-banner strong{color:var(--green)}
+  .reco-banner .rt{font-size:.84rem;color:var(--txt)}
+  .reco-banner .rs{font-size:.74rem;color:var(--txt-2);margin-top:2px}
+
+  /* ---------- Alerts ---------- */
+  .alert-list{display:grid;gap:11px}
+  .alert{display:flex;gap:13px;align-items:flex-start;background:var(--panel-2);border:1px solid var(--line);
+    border-left-width:4px;border-radius:12px;padding:13px 15px;transition:.16s}
+  .alert:hover{background:var(--panel-hover)}
+  .alert.crit{border-left-color:var(--red)}
+  .alert.warn{border-left-color:var(--amber)}
+  .alert.info{border-left-color:var(--blue)}
+  .alert .ai{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto}
+  .alert.crit .ai{background:rgba(248,113,113,.16);color:var(--red)}
+  .alert.warn .ai{background:rgba(251,191,36,.16);color:var(--amber)}
+  .alert.info .ai{background:rgba(59,130,246,.16);color:#7eacff}
+  .alert .at{font-size:.84rem;font-weight:600}
+  .alert .ad{font-size:.74rem;color:var(--txt-2);margin-top:2px}
+
+  /* ---------- Methodology ---------- */
+  .method{display:grid;gap:16px}
+  .formula{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font-family:'SF Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:.84rem;color:var(--cyan);overflow-x:auto}
+  .method-item h4{font-size:.92rem;font-weight:700;margin-bottom:7px;color:var(--violet-2);display:flex;align-items:center;gap:8px}
+  .method-item p{font-size:.83rem;color:var(--txt-2);margin-top:8px}
+  .ztable{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+  .zcell{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:12px;text-align:center}
+  .zcell .zl{font-size:.72rem;color:var(--txt-2)}
+  .zcell .zv{font-size:1.3rem;font-weight:800;color:var(--cyan);margin-top:3px}
+
+  .legend-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:.74rem;color:var(--txt-2)}
+  .legend-row span{display:inline-flex;align-items:center;gap:6px}
+  .lg-dot{width:11px;height:11px;border-radius:3px}
+
+  /* tooltips simples */
+  [data-tip]{position:relative;cursor:help}
+  [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+    background:#05080f;color:var(--txt);font-size:.72rem;font-weight:500;padding:8px 11px;border-radius:9px;white-space:normal;width:max-content;max-width:240px;
+    border:1px solid var(--line);box-shadow:var(--shadow);z-index:50;line-height:1.4}
+  [data-tip]:hover::before{content:"";position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:#05080f;z-index:50}
+
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line-soft);font-size:.74rem;color:var(--txt-3);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  @media (max-width:980px){
+    .grid-2,.grid-3,.grid-12-8,.grid-8-12,.scen-grid,.ztable{grid-template-columns:1fr}
+    .ztable{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:600px){
+    .wrap{padding:16px 14px 50px}
+    .clock .time{font-size:1.05rem}
+    .kpi .kval{font-size:1.5rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="capture-root">
+
+  <!-- HEADER -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Laboratório de Cenários S&amp;OE</h1>
+        <div class="sub">Sales &amp; Operations Execution — Horizonte 0 a 13 semanas · Siderúrgica AçoNova</div>
+        <span class="tag">V3 · Analítico What-If</span>
+      </div>
+    </div>
+    <div class="topright">
+      <div class="pulse"><span class="dot"></span> Dados ao vivo</div>
+      <div class="clock">
+        <div class="time" id="clock">--:--:--</div>
+        <div class="date" id="cdate">—</div>
+      </div>
+      <button class="btn" id="btnXlsx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Excel</button>
+      <button class="btn primary" id="btnPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>PDF</button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs" role="tablist" aria-label="Seções do painel">
+    <button class="tab active" data-view="analitica" role="tab" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Visão Analítica</button>
+    <button class="tab" data-view="acuracidade" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Acuracidade</button>
+    <button class="tab" data-view="simulador" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Simulador Avançado</button>
+    <button class="tab" data-view="tradeoff" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v6a3 3 0 0 0 3 3h6"/></svg>Trade-offs</button>
+    <button class="tab" data-view="metodologia" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Metodologia</button>
+  </nav>
+
+  <!-- ================= VIEW: ANALÍTICA ================= -->
+  <section class="view active" id="view-analitica" role="tabpanel">
+    <div class="section-head">
+      <h2><span class="accent-bar"></span> Visão Analítica de Execução</h2>
+      <p>Saúde operacional consolidada do horizonte de execução: nível de serviço, aderência ao plano, balanço demanda × suprimento, cobertura de estoque e exceções priorizadas.</p>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiRow"></div>
+
+    <div class="grid-12-8 mb">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/></svg> Balanço Demanda × Suprimento</h3>
+            <div class="hint">Toneladas/semana planejadas vs. capacidade de suprimento — gap semanal de fechamento (W0–W13).</div>
+          </div>
+          <span class="badge b-violet">13 semanas</span>
+        </div>
+        <div class="chart-box" style="height:300px"><canvas id="chSupply"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Cobertura de Estoque</h3>
+            <div class="hint">Dias de cobertura por família — zona-alvo entre ruptura e excesso.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:300px"><canvas id="chCover"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-8-12 mb">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg> Gestão de Exceções &amp; Alertas</h3>
+            <div class="hint">Priorização automática por severidade e impacto em t e R$.</div>
+          </div>
+          <span class="badge b-red" id="alertCount">—</span>
+        </div>
+        <div class="alert-list" id="alertList"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg> Capacidade &amp; Utilização</h3>
+            <div class="hint">Utilização por linha de produção (laminação, aciaria, trefilaria, acabamento).</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:286px"><canvas id="chCap"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Tabela SKUs -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg> Carteira de SKUs — Execução por Item</h3>
+          <div class="hint">15 SKUs siderúrgicos: OTIF, fill rate, aderência ao plano, cobertura e estoque de segurança. Clique nos cabeçalhos para ordenar.</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="skuSearch" placeholder="Buscar SKU, família ou bitola…" aria-label="Buscar SKU" />
+        </div>
+        <select class="filt" id="famFilter" aria-label="Filtrar por família"><option value="">Todas as famílias</option></select>
+        <select class="filt" id="statusFilter" aria-label="Filtrar por status">
+          <option value="">Todos os status</option>
+          <option value="crit">Crítico</option>
+          <option value="warn">Atenção</option>
+          <option value="ok">Saudável</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table id="skuTable">
+          <thead>
+            <tr>
+              <th data-sort="sku">SKU / Família</th>
+              <th data-sort="bitola">Bitola</th>
+              <th class="num" data-sort="demanda">Dem. (t/sem)</th>
+              <th class="num" data-sort="otif">OTIF</th>
+              <th class="num" data-sort="fill">Fill Rate</th>
+              <th class="num" data-sort="ader">Aderência</th>
+              <th class="num" data-sort="cobertura">Cobertura</th>
+              <th class="num" data-sort="ss">Est. Seg. (t)</th>
+              <th data-sort="statusRank">Status</th>
+            </tr>
+          </thead>
+          <tbody id="skuBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VIEW: ACURACIDADE ================= -->
+  <section class="view" id="view-acuracidade" role="tabpanel">
+    <div class="section-head">
+      <h2><span class="accent-bar"></span> Acuracidade de Previsão</h2>
+      <p>Qualidade do plano de demanda por família: erro percentual médio absoluto (MAPE), viés (tendência de sub/superestimação) e leitura semanal de planejado vs. realizado.</p>
+    </div>
+
+    <div class="kpi-grid" id="kpiAcc"></div>
+
+    <div class="grid-2 mb">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="13" y="6" width="3" height="11"/></svg> MAPE &amp; Viés por Família</h3>
+            <div class="hint">Barras = MAPE (%); linha = viés (%). Viés positivo indica superestimação do plano.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:310px"><canvas id="chMape"></canvas></div>
+        <div class="legend-row">
+          <span><i class="lg-dot" style="background:var(--violet)"></i> MAPE (%)</span>
+          <span><i class="lg-dot" style="background:var(--amber)"></i> Viés (%)</span>
+          <span><i class="lg-dot" style="background:var(--green)"></i> Meta MAPE ≤ 12%</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg> Demanda Planejada vs. Realizada</h3>
+            <div class="hint">Toneladas consolidadas por semana — desvio acumulado do horizonte.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:310px"><canvas id="chPlanReal"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-8-12">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg> Distribuição de Risco de Cobertura</h3>
+            <div class="hint">Simulação determinística (estilo Monte Carlo) da cobertura sob variabilidade de demanda — densidade por faixa de dias.</div>
+          </div>
+          <span class="badge b-violet">5.000 cenários</span>
+        </div>
+        <div class="chart-box" style="height:300px"><canvas id="chRisk"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 3 3 4-7"/></svg> Tendência de Acuracidade (12 semanas)</h3>
+            <div class="hint">Evolução do MAPE consolidado e do nível de viés ao longo do tempo.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:300px"><canvas id="chAccTrend"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VIEW: SIMULADOR ================= -->
+  <section class="view" id="view-simulador" role="tabpanel">
+    <div class="section-head">
+      <h2><span class="accent-bar"></span> Simulador Avançado de Cenários</h2>
+      <p>Ajuste os parâmetros e veja os 3 cenários recalcularem ao vivo: cartões, tabela comparativa e gráficos respondem instantaneamente. O motor combina serviço, EBITDA projetado e custo de estoque em um score ponderado.</p>
+    </div>
+
+    <div class="reco-banner" id="recoBanner">
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div>
+        <div class="rt">Cenário recomendado: <strong id="recoName">—</strong> · score <strong id="recoScore">—</strong></div>
+        <div class="rs" id="recoWhy">Recalculando…</div>
+      </div>
+    </div>
+
+    <div class="card mb">
+      <div class="card-head">
+        <div>
+          <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg> Parâmetros de Simulação</h3>
+          <div class="hint">Mova os controles — tudo recalcula em tempo real (oninput).</div>
+        </div>
+        <button class="btn" id="btnReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Restaurar</button>
+      </div>
+      <div class="sliders">
+        <div class="slider-unit">
+          <label for="sSvc">Nível de Serviço-alvo <span class="v" id="vSvc">95%</span></label>
+          <input type="range" id="sSvc" min="90" max="99" step="1" value="95" list="svcTicks" />
+          <datalist id="svcTicks"><option value="90"></option><option value="95"></option><option value="97"></option><option value="99"></option></datalist>
+          <div class="desc">Define o fator Z do estoque de segurança (90→1,28 · 99→2,33).</div>
+        </div>
+        <div class="slider-unit">
+          <label for="sCap">Capacidade de Produção <span class="v" id="vCap">100%</span></label>
+          <input type="range" id="sCap" min="80" max="120" step="1" value="100" />
+          <div class="desc">% da capacidade nominal disponível no horizonte.</div>
+        </div>
+        <div class="slider-unit">
+          <label for="sLT">Lead Time de Suprimento <span class="v" id="vLT">3,0 sem</span></label>
+          <input type="range" id="sLT" min="1" max="8" step="0.5" value="3" />
+          <div class="desc">Semanas de reposição — impacta estoque de segurança (√LT).</div>
+        </div>
+        <div class="slider-unit">
+          <label for="sCost">Custo de Manutenção de Estoque <span class="v" id="vCost">22%</span></label>
+          <input type="range" id="sCost" min="12" max="35" step="1" value="22" />
+          <div class="desc">% a.a. sobre o valor médio do estoque (capital + armazenagem).</div>
+        </div>
+        <div class="slider-unit">
+          <label for="sMargin">Margem EBITDA-base <span class="v" id="vMargin">18%</span></label>
+          <input type="range" id="sMargin" min="8" max="30" step="1" value="18" />
+          <div class="desc">Margem operacional de referência sobre a receita do horizonte.</div>
+        </div>
+        <div class="slider-unit">
+          <label for="sDemand">Variação de Demanda <span class="v" id="vDemand">0%</span></label>
+          <input type="range" id="sDemand" min="-20" max="25" step="1" value="0" />
+          <div class="desc">Choque de demanda aplicado ao horizonte (cenário macro).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cenários -->
+    <div class="scen-grid" id="scenGrid"></div>
+
+    <div class="grid-2 mb">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><path d="M3 3v18h18"/></svg> Comparativo de Indicadores</h3>
+            <div class="hint">Serviço, caixa imobilizado, custo de estoque e EBITDA projetado por cenário.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:300px"><canvas id="chScenBars"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/></svg> Perfil de Score (radar)</h3>
+            <div class="hint">Decomposição do score: serviço, rentabilidade, eficiência de capital e custo.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:300px"><canvas id="chScenRadar"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Tabela comparativa -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg> Tabela Comparativa Completa</h3>
+          <div class="hint">Linha destacada = cenário recomendado pelo maior score.</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Indicador</th>
+              <th class="num" id="th-s1">Serviço 99%</th>
+              <th class="num" id="th-s2">Rentabilidade</th>
+              <th class="num" id="th-s3">Equilíbrio</th>
+            </tr>
+          </thead>
+          <tbody id="scenTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VIEW: TRADE-OFF ================= -->
+  <section class="view" id="view-tradeoff" role="tabpanel">
+    <div class="section-head">
+      <h2><span class="accent-bar"></span> Fronteira de Trade-offs</h2>
+      <p>Visualização do trade-off fundamental do S&OE: cada ponto é um cenário simulado — eixo X = nível de serviço, eixo Y = custo total de estoque, tamanho da bolha = caixa imobilizado em estoque. O cenário recomendado é destacado.</p>
+    </div>
+
+    <div class="grid-12-8 mb">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><circle cx="6" cy="18" r="3"/><circle cx="15" cy="9" r="3"/><circle cx="20" cy="14" r="2"/></svg> Fronteira Serviço × Custo × Estoque</h3>
+            <div class="hint">Bolhas maiores = mais capital imobilizado. Busca-se o canto inferior-direito (alto serviço, baixo custo).</div>
+          </div>
+          <span class="badge b-violet" id="bubbleReco">—</span>
+        </div>
+        <div class="chart-box" style="height:380px"><canvas id="chBubble"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg> Curva Serviço × Custo</h3>
+            <div class="hint">Custo marginal de cada ponto adicional de nível de serviço.</div>
+          </div>
+        </div>
+        <div class="chart-box" style="height:380px"><canvas id="chFrontier"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 4-8"/></svg> Sensibilidade do Score ao Nível de Serviço</h3>
+          <div class="hint">Como o score de equilíbrio reage à variação do nível de serviço-alvo, mantidos os demais parâmetros do simulador.</div>
+        </div>
+      </div>
+      <div class="chart-box" style="height:300px"><canvas id="chSens"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ================= VIEW: METODOLOGIA ================= -->
+  <section class="view" id="view-metodologia" role="tabpanel">
+    <div class="section-head">
+      <h2><span class="accent-bar"></span> Metodologia &amp; Fórmulas</h2>
+      <p>Como cada indicador e o motor de cenários são calculados — em linguagem executiva, com as fórmulas usadas no painel.</p>
+    </div>
+
+    <div class="method">
+      <div class="card method-item">
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg> Estoque de Segurança</h4>
+        <p>Protege o nível de serviço contra a variabilidade da demanda durante o tempo de reposição. Quanto maior o serviço-alvo e o lead time, maior o estoque necessário.</p>
+        <div class="formula">Estoque de Segurança = Z × σ_demanda × √(Lead Time)</div>
+        <p>O fator <b>Z</b> traduz o nível de serviço desejado em desvios-padrão da distribuição normal:</p>
+        <div class="ztable">
+          <div class="zcell"><div class="zl">Serviço 90%</div><div class="zv">1,28</div></div>
+          <div class="zcell"><div class="zl">Serviço 95%</div><div class="zv">1,65</div></div>
+          <div class="zcell"><div class="zl">Serviço 97%</div><div class="zv">1,88</div></div>
+          <div class="zcell"><div class="zl">Serviço 99%</div><div class="zv">2,33</div></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card method-item">
+          <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Cobertura de Estoque</h4>
+          <p>Quantos dias a operação consegue atender a demanda apenas com o estoque atual. Abaixo da zona-alvo há risco de ruptura; muito acima, capital imobilizado em excesso.</p>
+          <div class="formula">Cobertura (dias) = Estoque Atual ÷ Demanda Diária</div>
+        </div>
+        <div class="card method-item">
+          <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> OTIF &amp; Fill Rate</h4>
+          <p><b>OTIF</b> (On-Time-In-Full): pedidos entregues no prazo E completos. <b>Fill Rate</b>: fração da quantidade pedida efetivamente atendida.</p>
+          <div class="formula">OTIF = Pedidos no prazo e completos ÷ Total de pedidos
+Fill Rate = Qtd. atendida ÷ Qtd. pedida</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card method-item">
+          <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 4-7"/></svg> MAPE &amp; Viés</h4>
+          <p><b>MAPE</b> mede o erro médio do plano de demanda em %. <b>Viés</b> indica a direção do erro — positivo = plano superestima; negativo = subestima.</p>
+          <div class="formula">MAPE = média( |Real − Plano| ÷ Real ) × 100
+Viés = média( (Plano − Real) ÷ Real ) × 100</div>
+        </div>
+        <div class="card method-item">
+          <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Saúde Financeira</h4>
+          <p>O custo de carregar estoque combina capital de giro imobilizado, armazenagem e obsolescência. O EBITDA projetado considera a receita do horizonte líquida desse custo.</p>
+          <div class="formula">Custo de Estoque = Valor Médio do Estoque × Taxa de Manutenção
+Caixa Imobilizado = Estoque (t) × Preço Médio (R$/t)</div>
+        </div>
+      </div>
+
+      <div class="card method-item">
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Score de Cenário</h4>
+        <p>Cada cenário recebe uma nota de 0 a 100 que pondera três dimensões: <b>serviço</b> (entregar bem ao cliente), <b>rentabilidade</b> (EBITDA projetado) e <b>eficiência de capital</b> (penaliza custo de estoque adicional). O cenário com maior score é recomendado automaticamente. Os pesos variam conforme a prioridade de cada cenário.</p>
+        <div class="formula">Score = w_s × Serviço_norm + w_e × EBITDA_norm + w_c × (1 − Custo_norm)
+Recomendado = argmax(Score)   ·   pesos somam 1,0</div>
+        <div class="legend-row">
+          <span><i class="lg-dot" style="background:var(--green)"></i> Serviço 99%: prioriza serviço (w_s alto)</span>
+          <span><i class="lg-dot" style="background:var(--amber)"></i> Rentabilidade: prioriza EBITDA e custo</span>
+          <span><i class="lg-dot" style="background:var(--violet)"></i> Equilíbrio: pesos balanceados</span>
+        </div>
+      </div>
+
+      <div class="card method-item">
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg> Distribuição de Risco (Monte Carlo simplificado)</h4>
+        <p>Para a distribuição de risco de cobertura, geramos milhares de realizações determinísticas da demanda em torno da média, com a variabilidade observada. O histograma resultante mostra a probabilidade de a cobertura cair em cada faixa de dias — comunicando a incerteza, e não apenas um número único.</p>
+        <div class="formula">Demanda_i = média × (1 + variação · fator_normal_i)
+Cobertura_i = Estoque ÷ (Demanda_i ÷ 7)</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>Painel S&amp;OE V3 — Laboratório de Cenários · Dados de demonstração (siderúrgica fictícia AçoNova) · Gerado para apresentação executiva.</div>
+    <div>Atualizado <span id="footTime">—</span></div>
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   DADOS DE DEMONSTRAÇÃO — Siderúrgica AçoNova (15 SKUs)
+   ===================================================================== */
+const FAMILIES = ['Vergalhão CA-50','Fio-máquina','Perfil U','Chapa Grossa','Tubo sem costura','Arame recozido'];
+
+const SKUS = [
+  {sku:'VG-50-08', fam:'Vergalhão CA-50', bitola:'8,0 mm',  demanda:420, sigma:48, otif:97.2, fill:98.6, ader:96, estoque:540, lt:3.0, preco:4200},
+  {sku:'VG-50-10', fam:'Vergalhão CA-50', bitola:'10,0 mm', demanda:510, sigma:62, otif:94.1, fill:96.0, ader:92, estoque:430, lt:3.0, preco:4150},
+  {sku:'VG-50-12', fam:'Vergalhão CA-50', bitola:'12,5 mm', demanda:380, sigma:40, otif:98.4, fill:99.1, ader:98, estoque:610, lt:2.5, preco:4180},
+  {sku:'FM-55-55', fam:'Fio-máquina',     bitola:'5,5 mm',  demanda:300, sigma:55, otif:88.0, fill:90.5, ader:85, estoque:160, lt:4.0, preco:4380},
+  {sku:'FM-65-65', fam:'Fio-máquina',     bitola:'6,5 mm',  demanda:270, sigma:38, otif:95.5, fill:97.2, ader:94, estoque:380, lt:3.5, preco:4350},
+  {sku:'PU-100',   fam:'Perfil U',        bitola:'100 mm',  demanda:140, sigma:22, otif:96.8, fill:98.0, ader:95, estoque:300, lt:2.0, preco:5200},
+  {sku:'PU-150',   fam:'Perfil U',        bitola:'150 mm',  demanda:120, sigma:30, otif:91.2, fill:93.4, ader:88, estoque:120, lt:3.0, preco:5300},
+  {sku:'CG-1900',  fam:'Chapa Grossa',    bitola:'19,0 mm', demanda:230, sigma:34, otif:93.6, fill:95.5, ader:91, estoque:410, lt:4.5, preco:5650},
+  {sku:'CG-2540',  fam:'Chapa Grossa',    bitola:'25,4 mm', demanda:180, sigma:50, otif:85.5, fill:88.2, ader:82, estoque:95,  lt:5.0, preco:5800},
+  {sku:'CG-3175',  fam:'Chapa Grossa',    bitola:'31,7 mm', demanda:110, sigma:18, otif:97.9, fill:99.0, ader:97, estoque:520, lt:4.0, preco:5900},
+  {sku:'TS-1143',  fam:'Tubo sem costura',bitola:'114,3 mm',demanda:90,  sigma:20, otif:92.0, fill:94.1, ader:89, estoque:210, lt:6.0, preco:7200},
+  {sku:'TS-1683',  fam:'Tubo sem costura',bitola:'168,3 mm',demanda:75,  sigma:28, otif:86.4, fill:89.0, ader:83, estoque:80,  lt:6.5, preco:7450},
+  {sku:'AR-12',    fam:'Arame recozido',  bitola:'1,24 mm', demanda:160, sigma:24, otif:98.1, fill:99.2, ader:97, estoque:470, lt:2.5, preco:4900},
+  {sku:'AR-16',    fam:'Arame recozido',  bitola:'1,65 mm', demanda:200, sigma:42, otif:90.5, fill:92.8, ader:87, estoque:175, lt:3.0, preco:4850},
+  {sku:'AR-24',    fam:'Arame recozido',  bitola:'2,40 mm', demanda:130, sigma:19, otif:96.0, fill:97.8, ader:95, estoque:360, lt:2.5, preco:4780},
+];
+
+// Fator Z por nível de serviço
+function zFactor(svc){
+  if(svc>=99) return 2.33;
+  if(svc>=97) return 1.88;
+  if(svc>=95) return 1.65;
+  if(svc>=93) return 1.50; // interpolado
+  return 1.28; // 90%
+}
+function zInterp(svc){
+  // interpolação suave para sliders intermediários
+  const pts=[[90,1.28],[95,1.65],[97,1.88],[99,2.33]];
+  if(svc<=90) return 1.28;
+  if(svc>=99) return 2.33;
+  for(let i=0;i<pts.length-1;i++){
+    const [x0,y0]=pts[i],[x1,y1]=pts[i+1];
+    if(svc>=x0&&svc<=x1){ return y0+(y1-y0)*((svc-x0)/(x1-x0)); }
+  }
+  return 1.65;
+}
+
+// Métricas derivadas por SKU
+SKUS.forEach(s=>{
+  s.ss = Math.round(zFactor(95)*s.sigma*Math.sqrt(s.lt)); // est. segurança base 95%
+  s.cobertura = Math.round(s.estoque/(s.demanda/7)); // dias
+  s.valor = s.estoque*s.preco; // R$ imobilizado
+  // status
+  let rank=0,status='ok';
+  if(s.otif<90||s.cobertura<12){rank=2;status='crit';}
+  else if(s.otif<95||s.cobertura<20||s.cobertura>55||s.ader<90){rank=1;status='warn';}
+  s.statusRank=rank; s.status=status;
+});
+
+const fmt = (n,d=0)=>n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtBRL=(n)=>'R$ '+ (n>=1e6? (n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi'
+                       : n>=1e3? (n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:0})+' mil'
+                       : n.toLocaleString('pt-BR'));
+
+/* ---------- Chart.js defaults (tema dark) ---------- */
+Chart.defaults.color = '#9fb0d4';
+Chart.defaults.font.family = "'Inter',system-ui,sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.borderColor = 'rgba(34,48,79,.55)';
+const GRID = 'rgba(34,48,79,.5)';
+const TT = {
+  backgroundColor:'#05080f', borderColor:'#22304f', borderWidth:1,
+  titleColor:'#eaf0ff', bodyColor:'#9fb0d4', padding:11, cornerRadius:9,
+  titleFont:{weight:'700',size:12}, bodyFont:{size:11.5}, displayColors:true, boxPadding:4
+};
+function grad(ctx,c1,c2){
+  const g=ctx.createLinearGradient(0,0,0,300);
+  g.addColorStop(0,c1); g.addColorStop(1,c2); return g;
+}
+
+const charts={};
+const WEEKS = Array.from({length:14},(_,i)=>'W'+i);
+
+/* =====================================================================
+   RELÓGIO
+   ===================================================================== */
+function tick(){
+  const d=new Date();
+  const t=d.toLocaleTimeString('pt-BR');
+  const ds=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('clock').textContent=t;
+  document.getElementById('cdate').textContent=ds;
+  document.getElementById('footTime').textContent=d.toLocaleString('pt-BR');
+}
+setInterval(tick,1000); tick();
+
+/* =====================================================================
+   TABS
+   ===================================================================== */
+const lazyInit={acuracidade:false,simulador:false,tradeoff:false};
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false');});
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+    const v=tab.dataset.view;
+    document.getElementById('view-'+v).classList.add('active');
+    // inicializa charts da aba sob demanda
+    if(v==='acuracidade'&&!lazyInit.acuracidade){initAccuracy();lazyInit.acuracidade=true;}
+    if(v==='simulador'&&!lazyInit.simulador){initSimulator();lazyInit.simulador=true;}
+    if(v==='tradeoff'&&!lazyInit.tradeoff){initTradeoff();lazyInit.tradeoff=true;}
+    // resize para charts que estavam ocultos
+    setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize();}catch(e){}});},60);
+  });
+});
+
+/* =====================================================================
+   VIEW ANALÍTICA
+   ===================================================================== */
+function buildKPIs(){
+  const totDem = SKUS.reduce((a,s)=>a+s.demanda,0);
+  const otif = SKUS.reduce((a,s)=>a+s.otif*s.demanda,0)/totDem;
+  const fill = SKUS.reduce((a,s)=>a+s.fill*s.demanda,0)/totDem;
+  const ader = SKUS.reduce((a,s)=>a+s.ader*s.demanda,0)/totDem;
+  const cob  = SKUS.reduce((a,s)=>a+s.cobertura,0)/SKUS.length;
+  const capital = SKUS.reduce((a,s)=>a+s.valor,0);
+  const exc = SKUS.filter(s=>s.status!=='ok').length;
+
+  const kpis=[
+    {l:'OTIF Consolidado',v:fmt(otif,1)+'<small>%</small>',d:'+1,4 p.p. vs. S-1',cls:'up',bar:otif,max:100,col:'var(--green)',glow:'rgba(52,211,153,.18)',
+      icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',tip:'Pedidos entregues no prazo e completos.'},
+    {l:'Fill Rate',v:fmt(fill,1)+'<small>%</small>',d:'+0,8 p.p. vs. S-1',cls:'up',bar:fill,max:100,col:'var(--cyan)',glow:'rgba(34,211,238,.18)',
+      icon:'<path d="M20 7l-8 4-8-4M20 7v10l-8 4M4 7v10l8 4M12 11v10"/>',tip:'% da quantidade pedida efetivamente atendida.'},
+    {l:'Aderência ao Plano',v:fmt(ader,1)+'<small>%</small>',d:'−1,2 p.p. vs. S-1',cls:'down',bar:ader,max:100,col:'var(--violet-2)',glow:'rgba(139,92,246,.2)',
+      icon:'<path d="M9 11l3 3L22 4"/><path d="M12 3v9"/>',tip:'Realizado vs. planejado (demanda e produção).'},
+    {l:'Cobertura Média',v:fmt(cob,0)+'<small> dias</small>',d:'Zona-alvo 20–45d',cls:'flat',bar:Math.min(cob,60),max:60,col:'var(--blue)',glow:'rgba(59,130,246,.18)',
+      icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',tip:'Dias de demanda cobertos pelo estoque atual.'},
+    {l:'Caixa Imobilizado',v:fmtBRL(capital),d:'Estoque a preço médio',cls:'flat',bar:72,max:100,col:'var(--amber)',glow:'rgba(251,191,36,.16)',
+      icon:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',tip:'Capital de giro parado em estoque.'},
+    {l:'Exceções Ativas',v:exc+'<small> SKUs</small>',d:exc+' itens fora da meta',cls:exc>3?'down':'flat',bar:exc/SKUS.length*100,max:100,col:'var(--red)',glow:'rgba(248,113,113,.16)',
+      icon:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',tip:'SKUs em status crítico ou de atenção.'},
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="kpi" style="--glow:${k.glow}">
+      <div class="kicon" style="background:${k.glow}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="${k.col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.icon}</svg>
+      </div>
+      <div class="klabel" data-tip="${k.tip}">${k.l}</div>
+      <div class="kval">${k.v}</div>
+      <div class="kdelta ${k.cls}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${k.cls==='up'?'<path d="M7 17L17 7M17 7H8M17 7v9"/>':k.cls==='down'?'<path d="M7 7l10 10M17 17H8M17 17V8"/>':'<path d="M5 12h14"/>'}</svg>${k.d}
+      </div>
+      <div class="kbar"><i style="width:0%;background:${k.col}" data-w="${Math.min(k.bar/k.max*100,100)}"></i></div>
+    </div>`).join('');
+  // anima barras
+  requestAnimationFrame(()=>setTimeout(()=>{
+    document.querySelectorAll('#kpiRow .kbar i').forEach(b=>b.style.width=b.dataset.w+'%');
+  },120));
+}
+
+function buildAnalyticCharts(){
+  // Demanda x Suprimento
+  const dem = WEEKS.map((_,i)=> 2900 + Math.round(220*Math.sin(i/2.3)) + (i>7?120:0) - i*8);
+  const sup = WEEKS.map((_,i)=> 3050 - (i>=5&&i<=8? 260:0) + Math.round(90*Math.cos(i/1.8)));
+  const gap = dem.map((d,i)=> sup[i]-d);
+  const ctxS=document.getElementById('chSupply');
+  charts.supply=new Chart(ctxS,{
+    data:{labels:WEEKS,datasets:[
+      {type:'line',label:'Demanda (t)',data:dem,borderColor:'#a78bfa',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(139,92,246,.28)','rgba(139,92,246,0)'),fill:true,tension:.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointBackgroundColor:'#a78bfa',order:2},
+      {type:'line',label:'Suprimento (t)',data:sup,borderColor:'#22d3ee',backgroundColor:'transparent',borderDash:[6,4],fill:false,tension:.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,order:1},
+      {type:'bar',label:'Gap (t)',data:gap,backgroundColor:gap.map(g=>g>=0?'rgba(52,211,153,.55)':'rgba(248,113,113,.65)'),borderRadius:4,barThickness:10,order:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle',padding:14,font:{size:11}}},tooltip:TT},
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'t / semana'}}}}
+  });
+
+  // Cobertura por família (horizontal bar)
+  const famCob={};
+  FAMILIES.forEach(f=>{const arr=SKUS.filter(s=>s.fam===f);famCob[f]=Math.round(arr.reduce((a,s)=>a+s.cobertura,0)/arr.length);});
+  const ctxC=document.getElementById('chCover');
+  charts.cover=new Chart(ctxC,{type:'bar',
+    data:{labels:Object.keys(famCob),datasets:[{label:'Cobertura (dias)',data:Object.values(famCob),
+      backgroundColor:Object.values(famCob).map(v=> v<18?'rgba(248,113,113,.8)': v>50?'rgba(251,191,36,.8)':'rgba(52,211,153,.8)'),
+      borderRadius:6,barThickness:18}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>c.parsed.x+' dias'+(c.parsed.x<18?' · risco ruptura':c.parsed.x>50?' · excesso':' · saudável')}},
+        annotation:false},
+      scales:{x:{grid:{color:GRID},title:{display:true,text:'dias'}},y:{grid:{display:false}}}}
+  });
+
+  // Capacidade / utilização
+  const lines=['Aciaria','Laminação','Trefilaria','Acabamento'];
+  const util=[88,96,74,82];
+  const ctxCap=document.getElementById('chCap');
+  charts.cap=new Chart(ctxCap,{type:'bar',
+    data:{labels:lines,datasets:[
+      {label:'Utilização (%)',data:util,backgroundColor:util.map(u=>u>=95?'rgba(248,113,113,.8)':u>=85?'rgba(251,191,36,.8)':'rgba(52,211,153,.8)'),borderRadius:7,barThickness:38},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>'Utilização: '+c.parsed.y+'% '+(c.parsed.y>=95?'(gargalo)':c.parsed.y<80?'(folga)':'(ok)')}}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},max:110,title:{display:true,text:'% capacidade'},
+        ticks:{callback:v=>v+'%'}}}}
+  });
+}
+
+// Alertas / exceções
+function buildAlerts(){
+  const alerts=[];
+  SKUS.forEach(s=>{
+    if(s.cobertura<12) alerts.push({sev:'crit',t:`Risco de ruptura — ${s.sku}`,d:`Cobertura de ${s.cobertura} dias (abaixo do mínimo). Demanda ${fmt(s.demanda)} t/sem · LT ${s.lt.toString().replace('.',',')} sem.`});
+    else if(s.otif<88) alerts.push({sev:'crit',t:`OTIF crítico — ${s.sku}`,d:`Nível de serviço em ${fmt(s.otif,1)}%. Revisar sequenciamento e priorização de carteira.`});
+    else if(s.cobertura>55) alerts.push({sev:'warn',t:`Excesso de estoque — ${s.sku}`,d:`Cobertura de ${s.cobertura} dias · ${fmtBRL(s.valor)} imobilizados. Avaliar redução de aporte.`});
+    else if(s.ader<88) alerts.push({sev:'warn',t:`Aderência baixa — ${s.sku}`,d:`Realizado ${fmt(s.ader,0)}% do plano. Investigar desvio de demanda/produção.`});
+  });
+  alerts.push({sev:'warn',t:'Estouro de capacidade — Laminação',d:'Linha em 96% de utilização nas W5–W8. Risco de atraso no atendimento de vergalhão.'});
+  alerts.push({sev:'info',t:'Atraso de suprimento — Tubos sem costura',d:'Lead time de matéria-prima elevado (6,5 sem). Antecipar ordens de reposição.'});
+  // ordena por severidade
+  const rank={crit:0,warn:1,info:2};
+  alerts.sort((a,b)=>rank[a.sev]-rank[b.sev]);
+  const top=alerts.slice(0,7);
+  const crit=alerts.filter(a=>a.sev==='crit').length;
+  document.getElementById('alertCount').textContent=`${crit} críticos · ${alerts.length} total`;
+  const icons={crit:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',
+    warn:'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
+  document.getElementById('alertList').innerHTML=top.map(a=>`
+    <div class="alert ${a.sev}">
+      <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[a.sev]}</svg></div>
+      <div><div class="at">${a.t}</div><div class="ad">${a.d}</div></div>
+    </div>`).join('');
+}
+
+/* ---------- Tabela SKUs ---------- */
+let sortKey='statusRank',sortDir=-1;
+function statusPill(s){
+  const m={crit:['b-red','Crítico'],warn:['b-amber','Atenção'],ok:['b-green','Saudável']};
+  return `<span class="badge ${m[s][0]}">${m[s][1]}</span>`;
+}
+function miniBar(v,max,col){return `<span class="mini-bar"><i style="width:${Math.min(v/max*100,100)}%;background:${col}"></i></span>`;}
+function renderTable(){
+  const q=document.getElementById('skuSearch').value.toLowerCase();
+  const fam=document.getElementById('famFilter').value;
+  const st=document.getElementById('statusFilter').value;
+  let rows=SKUS.filter(s=>{
+    const match=(s.sku+' '+s.fam+' '+s.bitola).toLowerCase().includes(q);
+    return match && (!fam||s.fam===fam) && (!st||s.status===st);
+  });
+  rows.sort((a,b)=>{
+    let x=a[sortKey],y=b[sortKey];
+    if(typeof x==='string'){return sortDir*x.localeCompare(y);}
+    return sortDir*(x-y);
+  });
+  const otifCol=v=>v<90?'var(--red)':v<95?'var(--amber)':'var(--green)';
+  document.getElementById('skuBody').innerHTML=rows.map(s=>`
+    <tr>
+      <td><div class="sku-name">${s.sku}</div><div class="sku-fam">${s.fam}</div></td>
+      <td>${s.bitola}</td>
+      <td class="num">${fmt(s.demanda)}</td>
+      <td class="num">${miniBar(s.otif,100,otifCol(s.otif))} ${fmt(s.otif,1)}%</td>
+      <td class="num">${fmt(s.fill,1)}%</td>
+      <td class="num">${fmt(s.ader,0)}%</td>
+      <td class="num"><b style="color:${s.cobertura<18?'var(--red)':s.cobertura>50?'var(--amber)':'var(--green)'}">${s.cobertura}d</b></td>
+      <td class="num">${fmt(s.ss)}</td>
+      <td>${statusPill(s.status)}</td>
+    </tr>`).join('');
+  if(rows.length===0) document.getElementById('skuBody').innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--txt-3);padding:24px">Nenhum SKU encontrado.</td></tr>';
+}
+function initTable(){
+  const sel=document.getElementById('famFilter');
+  FAMILIES.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o);});
+  document.getElementById('skuSearch').addEventListener('input',renderTable);
+  document.getElementById('famFilter').addEventListener('change',renderTable);
+  document.getElementById('statusFilter').addEventListener('change',renderTable);
+  document.querySelectorAll('#skuTable th').forEach(th=>{
+    th.addEventListener('click',()=>{
+      const k=th.dataset.sort;
+      if(sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=1;}
+      renderTable();
+    });
+  });
+  renderTable();
+}
+
+/* =====================================================================
+   VIEW ACURACIDADE
+   ===================================================================== */
+function initAccuracy(){
+  const famData=FAMILIES.map(f=>{
+    const arr=SKUS.filter(s=>s.fam===f);
+    const mape = +(8 + (arr.reduce((a,s)=>a+(100-s.ader),0)/arr.length)*0.9).toFixed(1);
+    const vies = +(((arr.reduce((a,s)=>a+s.otif,0)/arr.length)-94)* (Math.random()>.5?1:-1)).toFixed(1);
+    return {f,mape:Math.min(mape,26),vies};
+  });
+  // KPIs de acuracidade
+  const mapeMed=+(famData.reduce((a,d)=>a+d.mape,0)/famData.length).toFixed(1);
+  const viesMed=+(famData.reduce((a,d)=>a+d.vies,0)/famData.length).toFixed(1);
+  const best=famData.reduce((a,b)=>a.mape<b.mape?a:b);
+  const worst=famData.reduce((a,b)=>a.mape>b.mape?a:b);
+  const accKpis=[
+    {l:'MAPE Consolidado',v:fmt(mapeMed,1)+'<small>%</small>',d:mapeMed<=12?'Dentro da meta (≤12%)':'Acima da meta',cls:mapeMed<=12?'up':'down',col:'var(--violet-2)',glow:'rgba(139,92,246,.18)',icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 4-7"/>'},
+    {l:'Viés Médio',v:(viesMed>0?'+':'')+fmt(viesMed,1)+'<small>%</small>',d:viesMed>0?'Plano superestima':'Plano subestima',cls:'flat',col:'var(--amber)',glow:'rgba(251,191,36,.16)',icon:'<path d="M12 2v20M2 12h20"/>'},
+    {l:'Melhor Família',v:best.f.split(' ')[0],d:'MAPE '+fmt(best.mape,1)+'%',cls:'up',col:'var(--green)',glow:'rgba(52,211,153,.16)',icon:'<path d="M9 11l3 3L22 4"/>'},
+    {l:'Pior Família',v:worst.f.split(' ')[0],d:'MAPE '+fmt(worst.mape,1)+'%',cls:'down',col:'var(--red)',glow:'rgba(248,113,113,.16)',icon:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'},
+  ];
+  document.getElementById('kpiAcc').innerHTML=accKpis.map(k=>`
+    <div class="kpi" style="--glow:${k.glow}">
+      <div class="kicon" style="background:${k.glow}"><svg viewBox="0 0 24 24" fill="none" stroke="${k.col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.icon}</svg></div>
+      <div class="klabel">${k.l}</div><div class="kval">${k.v}</div>
+      <div class="kdelta ${k.cls}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${k.cls==='up'?'<path d="M7 17L17 7M17 7H8M17 7v9"/>':k.cls==='down'?'<path d="M7 7l10 10M17 17H8M17 17V8"/>':'<path d="M5 12h14"/>'}</svg>${k.d}</div>
+    </div>`).join('');
+
+  // MAPE + Viés combo
+  charts.mape=new Chart(document.getElementById('chMape'),{
+    data:{labels:famData.map(d=>d.f.replace(' ','\n')),datasets:[
+      {type:'bar',label:'MAPE (%)',data:famData.map(d=>d.mape),backgroundColor:famData.map(d=>d.mape<=12?'rgba(139,92,246,.85)':'rgba(248,113,113,.82)'),borderRadius:6,barThickness:30,order:2,yAxisID:'y'},
+      {type:'line',label:'Viés (%)',data:famData.map(d=>d.vies),borderColor:'#fbbf24',backgroundColor:'#fbbf24',borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,order:1,yAxisID:'y1'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT,
+        annotation:false},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:GRID},title:{display:true,text:'MAPE %'},min:0,suggestedMax:28},
+        y1:{position:'right',grid:{display:false},title:{display:true,text:'Viés %'}}}}
+  });
+
+  // Planejado vs realizado
+  const plan=WEEKS.map((_,i)=>2800+Math.round(200*Math.sin(i/2.5))+i*6);
+  const real=plan.map((p,i)=>Math.round(p*(1+(Math.sin(i*1.7)*0.05)-(i>9?0.04:0))));
+  charts.planreal=new Chart(document.getElementById('chPlanReal'),{
+    data:{labels:WEEKS,datasets:[
+      {type:'line',label:'Planejado (t)',data:plan,borderColor:'#22d3ee',backgroundColor:'transparent',borderWidth:2.5,borderDash:[6,4],tension:.4,pointRadius:0,pointHoverRadius:5},
+      {type:'line',label:'Realizado (t)',data:real,borderColor:'#34d399',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(52,211,153,.25)','rgba(52,211,153,0)'),fill:true,borderWidth:2.5,tension:.4,pointRadius:0,pointHoverRadius:5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'t / semana'}}}}
+  });
+
+  // Distribuição de risco (Monte Carlo simplificado determinístico)
+  buildRiskChart();
+
+  // Tendência acuracidade
+  const wk=Array.from({length:12},(_,i)=>'S'+(i+1));
+  const mtrend=wk.map((_,i)=>+(16 - i*0.5 + Math.sin(i)*1.2).toFixed(1));
+  const vtrend=wk.map((_,i)=>+(4*Math.cos(i/2)).toFixed(1));
+  charts.acctrend=new Chart(document.getElementById('chAccTrend'),{
+    data:{labels:wk,datasets:[
+      {type:'line',label:'MAPE (%)',data:mtrend,borderColor:'#a78bfa',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(139,92,246,.25)','rgba(139,92,246,0)'),fill:true,borderWidth:2.5,tension:.4,pointRadius:0,pointHoverRadius:5},
+      {type:'line',label:'Viés (%)',data:vtrend,borderColor:'#fbbf24',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:5,borderDash:[5,4]}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'%'}}}}
+  });
+}
+
+function buildRiskChart(){
+  // simulação determinística: gera N realizações de cobertura
+  const meanDem=SKUS.reduce((a,s)=>a+s.demanda,0)/SKUS.length;
+  const meanStock=SKUS.reduce((a,s)=>a+s.estoque,0)/SKUS.length;
+  const cv=0.18; // coef. variação
+  const N=5000, bins={}, binW=4;
+  // pseudo-normal via soma (Irwin-Hall) determinística com seed
+  let seed=42; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+  for(let i=0;i<N;i++){
+    let g=0;for(let k=0;k<6;k++)g+=rnd();g=(g-3)/Math.sqrt(0.5); // ~N(0,1)
+    const dem=Math.max(meanDem*(1+cv*g),meanDem*0.4);
+    const cob=meanStock/(dem/7);
+    const b=Math.floor(cob/binW)*binW;
+    bins[b]=(bins[b]||0)+1;
+  }
+  const labels=Object.keys(bins).map(Number).sort((a,b)=>a-b);
+  const data=labels.map(l=>bins[l]/N*100);
+  const target=labels.map(l=> (l>=20&&l<=45));
+  charts.risk=new Chart(document.getElementById('chRisk'),{type:'bar',
+    data:{labels:labels.map(l=>l+'–'+(l+binW)+'d'),datasets:[{
+      label:'Probabilidade (%)',data,
+      backgroundColor:labels.map((l,i)=> l<16?'rgba(248,113,113,.8)': l>50?'rgba(251,191,36,.8)': target[i]?'rgba(52,211,153,.85)':'rgba(139,92,246,.7)'),
+      borderRadius:4,barThickness:'flex',categoryPercentage:.95,barPercentage:.98}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{
+        title:c=>'Cobertura '+c[0].label,
+        label:c=>fmt(c.parsed.y,1)+'% dos cenários'+(parseInt(c.label)<16?' · risco ruptura':parseInt(c.label)>50?' · excesso':' · zona-alvo')}}},
+      scales:{x:{grid:{display:false},title:{display:true,text:'dias de cobertura'}},
+        y:{grid:{color:GRID},title:{display:true,text:'% dos cenários'}}}}
+  });
+}
+
+/* =====================================================================
+   VIEW SIMULADOR — recálculo ao vivo
+   ===================================================================== */
+const SIM_DEFAULTS={svc:95,cap:100,lt:3,cost:22,margin:18,demand:0};
+const sim={...SIM_DEFAULTS};
+
+// base agregada do horizonte
+const BASE={
+  receita: 168_000_000, // R$ no horizonte
+  volume: SKUS.reduce((a,s)=>a+s.demanda,0)*13, // t no horizonte
+  precoMed: SKUS.reduce((a,s)=>a+s.preco*s.demanda,0)/SKUS.reduce((a,s)=>a+s.demanda,0),
+  sigmaMed: SKUS.reduce((a,s)=>a+s.sigma,0)/SKUS.length,
+  demMed: SKUS.reduce((a,s)=>a+s.demanda,0),
+};
+
+// calcula um cenário a partir de overrides de serviço + pesos
+function computeScenario(svcTarget,weights){
+  const demFactor=1+sim.demand/100;
+  const z=zInterp(svcTarget);
+  // estoque de segurança agregado (t) ~ z*sigma*sqrt(LT)*nSkus
+  const ss = z*BASE.sigmaMed*Math.sqrt(sim.lt)*SKUS.length*demFactor;
+  // estoque ciclo + segurança
+  const estoque = (BASE.demMed*sim.lt/2 + ss)*demFactor;
+  const capital = estoque*BASE.precoMed;               // R$ imobilizado
+  const custoEstoque = capital*(sim.cost/100)*(13/52); // custo no horizonte (13 sem)
+  // serviço atingido limitado pela capacidade
+  const capPenalty = sim.cap<100 ? (100-sim.cap)*0.35 : 0;
+  const servico = Math.max(80,Math.min(99.5, svcTarget - capPenalty - Math.max(0,(sim.lt-3))*0.6 ));
+  // receita ajustada por demanda e perdas de serviço
+  const receita=BASE.receita*demFactor*(servico/100);
+  // EBITDA: margem base − impacto de custo de estoque, +ganho marginal de serviço alto
+  const ebitdaMargin = sim.margin/100 - (custoEstoque/receita) + (servico-90)/100*0.18;
+  const ebitda = receita*ebitdaMargin;
+  return {svcTarget,z,servico,estoque,capital,custoEstoque,receita,ebitda,ebitdaMargin};
+}
+
+// normalização para score (entre os 3 cenários)
+function scoreScenarios(list){
+  const sMax=Math.max(...list.map(s=>s.servico)),sMin=Math.min(...list.map(s=>s.servico));
+  const eMax=Math.max(...list.map(s=>s.ebitda)),eMin=Math.min(...list.map(s=>s.ebitda));
+  const cMax=Math.max(...list.map(s=>s.custoEstoque)),cMin=Math.min(...list.map(s=>s.custoEstoque));
+  const kMax=Math.max(...list.map(s=>s.capital)),kMin=Math.min(...list.map(s=>s.capital));
+  const nz=(v,mn,mx)=>mx===mn?0.5:(v-mn)/(mx-mn);
+  list.forEach(s=>{
+    const sv=nz(s.servico,sMin,sMax), eb=nz(s.ebitda,eMin,eMax),
+          co=1-nz(s.custoEstoque,cMin,cMax), ca=1-nz(s.capital,kMin,kMax);
+    s.parts={servico:sv,ebitda:eb,custo:co,capital:ca};
+    s.score=Math.round((s.w.s*sv + s.w.e*eb + s.w.c*co + s.w.k*ca)*100);
+  });
+}
+
+const SCEN_META=[
+  {key:'s1',name:'Serviço 99%',type:'Máximo nível de serviço',svc:99,w:{s:.50,e:.20,c:.15,k:.15},col:'#34d399'},
+  {key:'s2',name:'Rentabilidade',type:'Foco em EBITDA e capital',svc:93,w:{s:.18,e:.42,c:.25,k:.15},col:'#fbbf24'},
+  {key:'s3',name:'Equilíbrio',type:'Balanço serviço × custo',svc:96,w:{s:.33,e:.30,c:.20,k:.17},col:'#a78bfa'},
+];
+
+function runSim(){
+  const list=SCEN_META.map(m=>{const c=computeScenario(m.svc,m.w);return {...m,...c,w:m.w};});
+  scoreScenarios(list);
+  const reco=list.reduce((a,b)=>a.score>=b.score?a:b);
+  renderScenCards(list,reco);
+  renderRecoBanner(reco,list);
+  renderScenTable(list,reco);
+  updateScenCharts(list,reco);
+  return {list,reco};
+}
+
+function ringSVG(score,col){
+  const r=26,c=2*Math.PI*r,off=c*(1-score/100);
+  return `<div class="ring"><svg width="62" height="62" viewBox="0 0 62 62">
+    <circle cx="31" cy="31" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/>
+    <circle cx="31" cy="31" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+    </svg><div class="rv" style="color:${col}">${score}</div></div>`;
+}
+
+function renderScenCards(list,reco){
+  document.getElementById('scenGrid').innerHTML=list.map(s=>`
+    <div class="scen ${s.key===reco.key?'reco':''}">
+      ${s.key===reco.key?'<div class="crown">★ Recomendado</div>':''}
+      <h4><span style="width:10px;height:10px;border-radius:3px;background:${s.col};display:inline-block"></span>${s.name}</h4>
+      <div class="stype">${s.type}</div>
+      <div class="score-ring">
+        ${ringSVG(s.score,s.col)}
+        <div>
+          <div style="font-size:.7rem;color:var(--txt-3);text-transform:uppercase;letter-spacing:.05em">Score de cenário</div>
+          <div style="font-size:.78rem;color:var(--txt-2);margin-top:3px">Serviço atingido <b style="color:var(--txt)">${fmt(s.servico,1)}%</b></div>
+        </div>
+      </div>
+      <ul>
+        <li>EBITDA projetado <b>${fmtBRL(s.ebitda)}</b></li>
+        <li>Margem EBITDA <b>${fmt(s.ebitdaMargin*100,1)}%</b></li>
+        <li>Custo de estoque <b>${fmtBRL(s.custoEstoque)}</b></li>
+        <li>Caixa imobilizado <b>${fmtBRL(s.capital)}</b></li>
+        <li>Estoque <b>${fmt(s.estoque)} t</b></li>
+      </ul>
+    </div>`).join('');
+}
+
+function renderRecoBanner(reco,list){
+  document.getElementById('recoName').textContent=reco.name;
+  document.getElementById('recoScore').textContent=reco.score;
+  const others=list.filter(s=>s.key!==reco.key);
+  document.getElementById('recoWhy').innerHTML=
+    `Melhor equilíbrio entre serviço (${fmt(reco.servico,1)}%), EBITDA (${fmtBRL(reco.ebitda)}) e custo de estoque (${fmtBRL(reco.custoEstoque)}). `+
+    `Supera "${others[0].name}" (${others[0].score}) e "${others[1].name}" (${others[1].score}) no score ponderado.`;
+}
+
+function renderScenTable(list,reco){
+  document.getElementById('th-s1').textContent=list[0].name;
+  document.getElementById('th-s2').textContent=list[1].name;
+  document.getElementById('th-s3').textContent=list[2].name;
+  const rows=[
+    ['Serviço atingido',s=>fmt(s.servico,1)+'%'],
+    ['Fator Z',s=>fmt(s.z,2).replace('.',',')],
+    ['Estoque (t)',s=>fmt(s.estoque)],
+    ['Caixa imobilizado',s=>fmtBRL(s.capital)],
+    ['Custo de estoque (13 sem)',s=>fmtBRL(s.custoEstoque)],
+    ['Receita projetada',s=>fmtBRL(s.receita)],
+    ['Margem EBITDA',s=>fmt(s.ebitdaMargin*100,1)+'%'],
+    ['EBITDA projetado',s=>fmtBRL(s.ebitda)],
+    ['Score',s=>`<b style="color:${s.col}">${s.score}</b>`],
+  ];
+  document.getElementById('scenTableBody').innerHTML=rows.map(([lbl,fn])=>`
+    <tr>
+      <td style="font-weight:600">${lbl}</td>
+      <td class="num" style="${reco.key==='s1'?'background:rgba(52,211,153,.07)':''}">${fn(list[0])}</td>
+      <td class="num" style="${reco.key==='s2'?'background:rgba(52,211,153,.07)':''}">${fn(list[1])}</td>
+      <td class="num" style="${reco.key==='s3'?'background:rgba(52,211,153,.07)':''}">${fn(list[2])}</td>
+    </tr>`).join('');
+}
+
+function initSimulator(){
+  // sliders
+  const bind=(id,fn)=>{
+    const el=document.getElementById(id);
+    const upd=()=>{
+      sim[fn]=parseFloat(el.value);
+      el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');
+      updateSliderLabels();
+      runSim();
+      if(lazyInit.tradeoff) updateTradeoff();
+    };
+    el.addEventListener('input',upd);
+    el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');
+  };
+  bind('sSvc','svc');bind('sCap','cap');bind('sLT','lt');bind('sCost','cost');bind('sMargin','margin');bind('sDemand','demand');
+  document.getElementById('btnReset').addEventListener('click',()=>{
+    Object.assign(sim,SIM_DEFAULTS);
+    const map={sSvc:'svc',sCap:'cap',sLT:'lt',sCost:'cost',sMargin:'margin',sDemand:'demand'};
+    Object.entries(map).forEach(([id,k])=>{const el=document.getElementById(id);el.value=SIM_DEFAULTS[k];el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');});
+    updateSliderLabels();runSim();if(lazyInit.tradeoff)updateTradeoff();
+  });
+  // charts vazios
+  charts.scenBars=new Chart(document.getElementById('chScenBars'),{type:'bar',
+    data:{labels:['Serviço (%)','Caixa imob. (R$mi)','Custo est. (R$mi)','EBITDA (R$mi)'],datasets:[]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID}}}}
+  });
+  charts.scenRadar=new Chart(document.getElementById('chScenRadar'),{type:'radar',
+    data:{labels:['Serviço','Rentabilidade','Efic. Capital','Baixo Custo'],datasets:[]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+      scales:{r:{angleLines:{color:GRID},grid:{color:GRID},pointLabels:{color:'#9fb0d4',font:{size:11}},
+        ticks:{display:false,stepSize:25},min:0,max:100,suggestedMax:100}}}
+  });
+  updateSliderLabels();
+  runSim();
+}
+
+function updateSliderLabels(){
+  document.getElementById('vSvc').textContent=sim.svc+'%';
+  document.getElementById('vCap').textContent=sim.cap+'%';
+  document.getElementById('vLT').textContent=fmt(sim.lt,1).replace('.',',')+' sem';
+  document.getElementById('vCost').textContent=sim.cost+'%';
+  document.getElementById('vMargin').textContent=sim.margin+'%';
+  document.getElementById('vDemand').textContent=(sim.demand>0?'+':'')+sim.demand+'%';
+}
+
+function updateScenCharts(list,reco){
+  // barras agrupadas
+  charts.scenBars.data.datasets=list.map(s=>({
+    label:s.name,
+    data:[s.servico, s.capital/1e6, s.custoEstoque/1e6, s.ebitda/1e6],
+    backgroundColor:s.col+ (s.key===reco.key?'':'cc'),
+    borderColor:s.col,borderWidth:s.key===reco.key?2:0,borderRadius:5,barPercentage:.8,categoryPercentage:.7
+  }));
+  charts.scenBars.update();
+  // radar
+  charts.scenRadar.data.datasets=list.map(s=>({
+    label:s.name,
+    data:[s.parts.servico*100,s.parts.ebitda*100,s.parts.capital*100,s.parts.custo*100],
+    borderColor:s.col,backgroundColor:s.col+'22',borderWidth:s.key===reco.key?2.5:1.5,
+    pointBackgroundColor:s.col,pointRadius:s.key===reco.key?4:3,fill:true
+  }));
+  charts.scenRadar.update();
+}
+
+/* =====================================================================
+   VIEW TRADE-OFF
+   ===================================================================== */
+function initTradeoff(){
+  charts.bubble=new Chart(document.getElementById('chBubble'),{type:'bubble',
+    data:{datasets:[]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{...TT,callbacks:{
+          label:c=>{const d=c.raw;return [`${d.name}`,`Serviço: ${fmt(d.x,1)}%`,`Custo estoque: ${fmtBRL(d.cost)}`,`Caixa imob.: ${fmtBRL(d.cap)}`];}}}},
+      scales:{x:{grid:{color:GRID},title:{display:true,text:'Nível de serviço atingido (%)'},min:82,max:100},
+        y:{grid:{color:GRID},title:{display:true,text:'Custo de estoque (R$ milhões)'}}}}
+  });
+  charts.frontier=new Chart(document.getElementById('chFrontier'),{type:'line',
+    data:{labels:[],datasets:[]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+      scales:{x:{grid:{display:false},title:{display:true,text:'Nível de serviço (%)'}},
+        y:{grid:{color:GRID},title:{display:true,text:'Custo de estoque (R$mi)'}}}}
+  });
+  charts.sens=new Chart(document.getElementById('chSens'),{type:'line',
+    data:{labels:[],datasets:[]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+      scales:{x:{grid:{display:false},title:{display:true,text:'Nível de serviço-alvo (%)'}},
+        y:{grid:{color:GRID},title:{display:true,text:'Score de equilíbrio'},min:0,max:100}}}
+  });
+  updateTradeoff();
+}
+
+function updateTradeoff(){
+  const {list,reco}=runSim();
+  // Bubble: cada cenário
+  charts.bubble.data.datasets=[{
+    label:'Cenários',
+    data:list.map(s=>({x:s.servico,y:s.custoEstoque/1e6,r:8+s.capital/1e6*1.4,name:s.name,cost:s.custoEstoque,cap:s.capital})),
+    backgroundColor:list.map(s=>s.key===reco.key?'rgba(52,211,153,.85)':s.col+'99'),
+    borderColor:list.map(s=>s.key===reco.key?'#34d399':s.col),borderWidth:list.map(s=>s.key===reco.key?3:1.5)
+  }];
+  charts.bubble.update();
+  document.getElementById('bubbleReco').textContent='Recomendado: '+reco.name;
+
+  // Fronteira: varre serviço 88→99
+  const xs=[];const ys=[];
+  for(let v=88;v<=99;v+=1){const c=computeScenario(v,{s:.33,e:.30,c:.20,k:.17});xs.push(v);ys.push(+(c.custoEstoque/1e6).toFixed(2));}
+  charts.frontier.data.labels=xs;
+  charts.frontier.data.datasets=[{
+    label:'Custo de estoque (R$mi)',data:ys,borderColor:'#22d3ee',
+    backgroundColor:(c)=>grad(c.chart.ctx,'rgba(34,211,238,.25)','rgba(34,211,238,0)'),fill:true,
+    tension:.4,borderWidth:2.5,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#22d3ee'
+  }];
+  charts.frontier.update();
+
+  // Sensibilidade do score ao serviço
+  const sx=[],sScore=[];
+  for(let v=90;v<=99;v+=1){
+    // monta 3 cenários onde s3 usa serviço variável
+    const tmp=[
+      computeScenario(99,{s:.50,e:.20,c:.15,k:.15}),
+      computeScenario(93,{s:.18,e:.42,c:.25,k:.15}),
+      computeScenario(v ,{s:.33,e:.30,c:.20,k:.17}),
+    ];
+    tmp[0].w={s:.50,e:.20,c:.15,k:.15};tmp[1].w={s:.18,e:.42,c:.25,k:.15};tmp[2].w={s:.33,e:.30,c:.20,k:.17};
+    scoreScenarios(tmp);
+    sx.push(v);sScore.push(tmp[2].score);
+  }
+  charts.sens.data.labels=sx;
+  charts.sens.data.datasets=[{
+    label:'Score do cenário Equilíbrio',data:sScore,borderColor:'#a78bfa',
+    backgroundColor:(c)=>grad(c.chart.ctx,'rgba(139,92,246,.28)','rgba(139,92,246,0)'),fill:true,
+    tension:.4,borderWidth:2.5,pointRadius:3,pointHoverRadius:6,pointBackgroundColor:'#a78bfa'
+  }];
+  charts.sens.update();
+}
+
+/* =====================================================================
+   EXPORTAÇÃO
+   ===================================================================== */
+document.getElementById('btnXlsx').addEventListener('click',()=>{
+  const wb=XLSX.utils.book_new();
+  // SKUs
+  const skuRows=SKUS.map(s=>({SKU:s.sku,Família:s.fam,Bitola:s.bitola,'Demanda (t/sem)':s.demanda,
+    'OTIF (%)':s.otif,'Fill Rate (%)':s.fill,'Aderência (%)':s.ader,'Cobertura (dias)':s.cobertura,
+    'Est. Segurança (t)':s.ss,'Estoque (t)':s.estoque,'Caixa (R$)':s.valor,Status:s.status}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(skuRows),'SKUs');
+  // Cenários (estado atual do simulador)
+  const {list}=runSim();
+  const scRows=list.map(s=>({Cenário:s.name,'Serviço (%)':+s.servico.toFixed(1),'Fator Z':+s.z.toFixed(2),
+    'Estoque (t)':Math.round(s.estoque),'Caixa (R$)':Math.round(s.capital),'Custo Estoque (R$)':Math.round(s.custoEstoque),
+    'Receita (R$)':Math.round(s.receita),'Margem EBITDA (%)':+(s.ebitdaMargin*100).toFixed(1),
+    'EBITDA (R$)':Math.round(s.ebitda),Score:s.score}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(scRows),'Cenários');
+  // Parâmetros
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([
+    {Parâmetro:'Nível de serviço-alvo',Valor:sim.svc+'%'},
+    {Parâmetro:'Capacidade',Valor:sim.cap+'%'},
+    {Parâmetro:'Lead time',Valor:sim.lt+' sem'},
+    {Parâmetro:'Custo manutenção estoque',Valor:sim.cost+'%'},
+    {Parâmetro:'Margem EBITDA-base',Valor:sim.margin+'%'},
+    {Parâmetro:'Variação de demanda',Valor:sim.demand+'%'},
+  ]),'Parâmetros');
+  XLSX.writeFile(wb,'SOE_Laboratorio_Cenarios.xlsx');
+});
+
+document.getElementById('btnPdf').addEventListener('click',async()=>{
+  const btn=document.getElementById('btnPdf');const orig=btn.innerHTML;
+  btn.innerHTML='Gerando…';btn.disabled=true;
+  try{
+    const node=document.getElementById('capture-root');
+    const canvas=await html2canvas(node,{backgroundColor:'#0a0e1a',scale:1.4,useCORS:true,windowWidth:node.scrollWidth});
+    const img=canvas.toDataURL('image/jpeg',0.92);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pw=210, ph=297, iw=pw, ih=canvas.height*pw/canvas.width;
+    let pos=0,left=ih;
+    pdf.addImage(img,'JPEG',0,pos,iw,ih);left-=ph;
+    while(left>0){pos=left-ih;pdf.addPage();pdf.addImage(img,'JPEG',0,pos,iw,ih);left-=ph;}
+    pdf.save('Painel_SOE_Laboratorio_Cenarios.pdf');
+  }catch(e){alert('Falha ao gerar PDF: '+e.message);}
+  btn.innerHTML=orig;btn.disabled=false;
+});
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+window.addEventListener('DOMContentLoaded',()=>{
+  buildKPIs();
+  buildAnalyticCharts();
+  buildAlerts();
+  initTable();
+});
+</script>
+</body>
+</html>
