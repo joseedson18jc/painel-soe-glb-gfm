@@ -11,6 +11,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -243,6 +246,28 @@
   .grid-8-12{display:grid;grid-template-columns:1fr 1.5fr;gap:18px}
   .mb{margin-bottom:18px}
   .chart-box{position:relative;width:100%}
+  /* ===== 3D scenario charts ===== */
+  .soe3d-wrap{position:absolute;inset:0;width:100%;height:100%;touch-action:none;overflow:hidden}
+  .soe3d-wrap canvas{display:block;touch-action:none;outline:none}
+  .soe3d-label{font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:600;color:#cdd8f5;text-shadow:0 1px 3px rgba(0,0,0,.85);pointer-events:none;white-space:nowrap;letter-spacing:.01em}
+  .soe3d-tick{font-size:9.5px;font-weight:500;color:#7e8db5;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+  .soe3d-tip{position:absolute;z-index:30;pointer-events:none;display:none;max-width:180px;
+    background:rgba(14,20,36,.96);border:1px solid var(--line);border-radius:10px;padding:7px 10px;
+    box-shadow:0 8px 26px rgba(0,0,0,.55);font-size:.72rem;color:var(--txt);transform:translate(-50%,-115%);transition:opacity .08s}
+  .soe3d-tip .t-h{font-weight:700;font-size:.72rem;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+  .soe3d-tip .t-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .soe3d-tip .t-row{color:var(--txt-2);font-size:.68rem}
+  .soe3d-tip .t-val{color:var(--txt);font-weight:700;font-size:.86rem;margin-top:2px}
+  .soe3d-ui{position:absolute;top:8px;right:8px;z-index:20;display:flex;gap:6px}
+  .soe3d-btn{cursor:pointer;border:1px solid var(--line);background:rgba(18,26,46,.85);color:var(--txt-2);
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;transition:.15s;backdrop-filter:blur(4px)}
+  .soe3d-btn:hover{color:var(--txt);border-color:var(--violet);background:rgba(27,39,71,.9)}
+  .soe3d-btn.on{color:var(--violet-2);border-color:var(--violet);background:rgba(139,92,246,.18)}
+  .soe3d-hint{position:absolute;left:8px;bottom:6px;z-index:20;font-size:.62rem;color:var(--txt-3);
+    background:rgba(10,14,26,.6);padding:2px 8px;border-radius:20px;pointer-events:none;letter-spacing:.01em}
+  .soe3d-legend{position:absolute;left:8px;top:8px;z-index:20;display:flex;flex-wrap:wrap;gap:5px 10px;max-width:70%;pointer-events:none}
+  .soe3d-legend .lg{display:flex;align-items:center;gap:5px;font-size:.66rem;color:var(--txt-2);background:rgba(10,14,26,.55);padding:2px 7px;border-radius:20px}
+  .soe3d-legend .lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
   .badge{font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:30px;letter-spacing:.03em;white-space:nowrap}
   .b-green{background:rgba(52,211,153,.14);color:var(--green);border:1px solid rgba(52,211,153,.3)}
   .b-amber{background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
@@ -700,7 +725,7 @@
             <div class="hint">Serviço, caixa imobilizado, custo de estoque e EBITDA projetado por cenário.</div>
           </div>
         </div>
-        <div class="chart-box" style="height:300px"><canvas id="chScenBars"></canvas></div>
+        <div class="chart-box" style="height:300px"><canvas id="chScenBars"></canvas><div id="scenBars3D" class="soe3d-wrap" style="display:none"></div></div>
       </div>
       <div class="card">
         <div class="card-head">
@@ -709,7 +734,7 @@
             <div class="hint">Decomposição do score: serviço, rentabilidade, eficiência de capital e custo.</div>
           </div>
         </div>
-        <div class="chart-box" style="height:300px"><canvas id="chScenRadar"></canvas></div>
+        <div class="chart-box" style="height:300px"><canvas id="chScenRadar"></canvas><div id="scenRadar3D" class="soe3d-wrap" style="display:none"></div></div>
       </div>
     </div>
 
@@ -1663,6 +1688,12 @@ function updateSliderLabels(){
   document.getElementById('vDemand').textContent=(sim.demand>0?'+':'')+sim.demand+'%';
 }
 function updateScenCharts(list,reco){
+  // guarda último estado para o módulo 3D (evita corrida módulo vs script)
+  window.__scen={list,reco};
+  // se o motor 3D estiver pronto, renderiza nele e pula o trabalho pesado do Chart.js 2D
+  if(window.SOE3D&&window.SOE3D.ready){
+    try{ window.SOE3D.bars(list,reco); window.SOE3D.radar(list,reco); return; }catch(e){ /* cai no fallback 2D */ }
+  }
   charts.scenBars.data.datasets=list.map(s=>({
     label:s.name,
     data:[s.servico, s.capital/1e6, s.custoEstoque/1e6, s.ebitda/1e6],
@@ -1804,6 +1835,374 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   await applyData(false);   // primeira carga (real ou demo)
   pollLoop();               // polling 90s
 });
+</script>
+
+<!-- =====================================================================
+     GRÁFICOS 3D REAIS (Three.js) — barras agrupadas + radar 3D
+     interativos ao toque (1 dedo orbita, 2 dedos zoom/pan).
+     Substitui os 2 canvas Chart.js 2D quando WebGL disponível;
+     caso contrário mantém o fallback 2D funcionando.
+     ===================================================================== -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+/* ---------- detecção de WebGL ---------- */
+function hasWebGL(){
+  try{ const c=document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl'))); }
+  catch(e){ return false; }
+}
+
+const ptBR = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fmtPct = v => ptBR.format(v)+'%';
+const fmtMi  = v => 'R$ '+ptBR.format(v)+' mi';
+
+/* ===================================================================
+   Cena 3D base reutilizável (renderer WebGL + CSS2D + OrbitControls)
+   =================================================================== */
+class Scene3D{
+  constructor(mountId){
+    this.mount=document.getElementById(mountId);
+    this.scene=new THREE.Scene();
+    this.dynamic=new THREE.Group();       // conteúdo recriado a cada update
+    this.scene.add(this.dynamic);
+
+    this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+    this.renderer.setClearColor(0x000000,0);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    this.mount.appendChild(this.renderer.domElement);
+
+    this.labelRenderer=new CSS2DRenderer();
+    this.labelRenderer.domElement.style.position='absolute';
+    this.labelRenderer.domElement.style.top='0';
+    this.labelRenderer.domElement.style.left='0';
+    this.labelRenderer.domElement.style.pointerEvents='none';
+    this.mount.appendChild(this.labelRenderer.domElement);
+
+    this.camera=new THREE.PerspectiveCamera(45,1,.1,1000);
+    this.home={pos:new THREE.Vector3(),tgt:new THREE.Vector3()};
+
+    this.controls=new OrbitControls(this.camera,this.renderer.domElement);
+    this.controls.enableDamping=true;
+    this.controls.dampingFactor=.08;
+    this.controls.enableZoom=true;
+    this.controls.minDistance=4;
+    this.controls.maxDistance=40;
+    this.controls.maxPolarAngle=Math.PI*0.495;   // não fura o piso
+    // toque: 1 dedo ROTATE, 2 dedos DOLLY+PAN
+    this.controls.touches={ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
+    this.controls.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
+
+    // luzes
+    this.scene.add(new THREE.AmbientLight(0x9fb0d4,0.95));
+    const key=new THREE.DirectionalLight(0xffffff,1.05); key.position.set(6,12,8); this.scene.add(key);
+    const fill=new THREE.DirectionalLight(0x8b5cf6,0.45); fill.position.set(-8,5,-6); this.scene.add(fill);
+
+    // tooltip + raycaster
+    this.tip=document.createElement('div'); this.tip.className='soe3d-tip'; this.mount.appendChild(this.tip);
+    this.ray=new THREE.Raycaster();
+    this.pointer=new THREE.Vector2();
+    this.pickables=[];
+    this._bindPick();
+
+    this._buildUI();
+
+    this.visible=true; this.running=false; this._w=0; this._h=0;
+    this._loop=this._loop.bind(this);
+
+    this.ro=new ResizeObserver(()=>this.resize()); this.ro.observe(this.mount);
+
+    // pausa quando fora da viewport
+    this.io=new IntersectionObserver(es=>{ this.visible=es[0].isIntersecting; if(this.visible)this.start(); },{threshold:.01});
+    this.io.observe(this.mount);
+
+    this.resize();
+  }
+
+  setHome(pos,tgt){
+    this.home.pos.copy(pos); this.home.tgt.copy(tgt);
+    this.camera.position.copy(pos);
+    this.controls.target.copy(tgt);
+    this.controls.update();
+  }
+  resetView(){
+    this.camera.position.copy(this.home.pos);
+    this.controls.target.copy(this.home.tgt);
+    this.controls.update();
+  }
+
+  _buildUI(){
+    const ui=document.createElement('div'); ui.className='soe3d-ui';
+    const spin=document.createElement('button'); spin.className='soe3d-btn'; spin.title='Auto-girar';
+    spin.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>';
+    spin.addEventListener('click',()=>{ this.controls.autoRotate=!this.controls.autoRotate; this.controls.autoRotateSpeed=1.6; spin.classList.toggle('on',this.controls.autoRotate); });
+    const reset=document.createElement('button'); reset.className='soe3d-btn'; reset.title='Resetar vista';
+    reset.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.3 2.6L3 8"/><path d="M3 3v5h5"/></svg>';
+    reset.addEventListener('click',()=>this.resetView());
+    ui.appendChild(spin); ui.appendChild(reset); this.mount.appendChild(ui);
+
+    const hint=document.createElement('div'); hint.className='soe3d-hint';
+    hint.textContent='arraste para girar · pinça para zoom';
+    this.mount.appendChild(hint);
+  }
+
+  addLabel(text,x,y,z,cls){
+    const el=document.createElement('div'); el.className='soe3d-label'+(cls?(' '+cls):''); el.textContent=text;
+    const o=new CSS2DObject(el); o.position.set(x,y,z); this.dynamic.add(o); return o;
+  }
+
+  clearDynamic(){
+    for(let i=this.dynamic.children.length-1;i>=0;i--){
+      const ch=this.dynamic.children[i];
+      this.dynamic.remove(ch);
+      ch.traverse&&ch.traverse(n=>{ if(n.geometry)n.geometry.dispose(); if(n.material){ (Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose&&m.dispose()); } });
+      if(ch.element&&ch.element.parentNode) ch.element.parentNode.removeChild(ch.element);
+    }
+    this.pickables=[];
+  }
+
+  _bindPick(){
+    const dom=this.renderer.domElement;
+    const move=(cx,cy)=>{
+      const r=dom.getBoundingClientRect();
+      this.pointer.x=((cx-r.left)/r.width)*2-1;
+      this.pointer.y=-((cy-r.top)/r.height)*2+1;
+      this.ray.setFromCamera(this.pointer,this.camera);
+      const hit=this.ray.intersectObjects(this.pickables,false)[0];
+      if(hit&&hit.object.userData&&hit.object.userData.tip){
+        const d=hit.object.userData.tip;
+        this.tip.innerHTML='<div class="t-h"><span class="t-dot" style="background:'+d.col+'"></span>'+d.title+'</div>'+
+                           '<div class="t-row">'+d.row+'</div><div class="t-val">'+d.val+'</div>';
+        this.tip.style.left=(cx-r.left)+'px';
+        this.tip.style.top=(cy-r.top)+'px';
+        this.tip.style.display='block';
+      } else { this.tip.style.display='none'; }
+    };
+    dom.addEventListener('pointermove',e=>move(e.clientX,e.clientY));
+    dom.addEventListener('pointerdown',e=>{ if(e.pointerType==='touch') move(e.clientX,e.clientY); });
+    dom.addEventListener('pointerleave',()=>{ this.tip.style.display='none'; });
+  }
+
+  resize(){
+    const w=this.mount.clientWidth, h=this.mount.clientHeight;
+    this._w=w; this._h=h;
+    if(w<=0||h<=0) return;            // aba oculta: evita aspect NaN / canvas 0
+    this.renderer.setSize(w,h,false);
+    this.labelRenderer.setSize(w,h);
+    this.camera.aspect=w/h; this.camera.updateProjectionMatrix();
+    if(this.visible) this.start();    // re-arma loop quando ganha tamanho
+  }
+
+  start(){ if(this.running)return; this.running=true; this._loop(); }
+  _loop(){
+    if(!this.running)return;
+    if(!this.visible){ this.running=false; return; }   // pausa fora de tela
+    if(this._w>0&&this._h>0){                           // só renderiza com tamanho válido
+      this.controls.update();
+      this.renderer.render(this.scene,this.camera);
+      this.labelRenderer.render(this.scene,this.camera);
+    }
+    requestAnimationFrame(this._loop);
+  }
+}
+
+/* ===================================================================
+   GRÁFICO 1 — BARRAS 3D AGRUPADAS
+   grade: 4 indicadores (X) × 3 cenários (Z); altura Y = valor/escala
+   escala linear compartilhada 0..100 (igual ao 2D), exatidão mantida.
+   =================================================================== */
+const BAR_LABELS=['Serviço (%)','Caixa imob. (R$mi)','Custo est. (R$mi)','EBITDA (R$mi)'];
+const BAR_H=8;                                // altura (cena) da barra mais alta
+const IND_GAP=3.2, SCEN_GAP=1.6, BAR_W=1.0;
+// passo "bonito" p/ ~n intervalos (auto-escala do eixo Y, evita overflow de unidades mistas)
+function niceStep(range,n){const raw=Math.max(range,1e-9)/Math.max(n,1);const e=Math.floor(Math.log10(raw));const b=Math.pow(10,e);const f=raw/b;const nf=f<1.5?1:f<3?2:f<7?5:10;return nf*b;}
+
+function makeBars(scene,list,reco){
+  scene.clearDynamic();
+  const nInd=BAR_LABELS.length, nSc=list.length;
+  const baseX=-(nInd-1)*IND_GAP/2;
+  const baseZ=-(nSc-1)*SCEN_GAP/2;
+
+  // piso + grade
+  const floorW=nInd*IND_GAP+2, floorD=nSc*SCEN_GAP+2;
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(floorW,floorD),
+    new THREE.MeshBasicMaterial({color:0x0e1424,transparent:true,opacity:.55,side:THREE.DoubleSide}));
+  floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.dynamic.add(floor);
+
+  // auto-escala do eixo Y ao máximo real dos dados (corrige overflow de unidades mistas)
+  const allVals=[]; list.forEach(s=>[s.servico,s.capital/1e6,s.custoEstoque/1e6,s.ebitda/1e6].forEach(v=>allVals.push(v)));
+  const maxV=Math.max(1,...allVals);
+  const step=niceStep(maxV,4);
+  const scaleMax=Math.max(step,Math.ceil(maxV/step)*step);
+  const ticks=[]; for(let t=0;t<=scaleMax+1e-9;t+=step) ticks.push(t);
+  // ticks do eixo Y (adaptativos) + linhas de grade no piso
+  const pts=[];
+  const xGrid0=baseX-IND_GAP*0.7, xGrid1=baseX+(nInd-1)*IND_GAP+IND_GAP*0.7;
+  const zBack=baseZ-SCEN_GAP*0.7;
+  ticks.forEach(t=>{
+    const y=t/scaleMax*BAR_H;
+    pts.push(xGrid0,y,zBack, xGrid1,y,zBack);                 // linha horizontal atrás
+    scene.addLabel(String(Math.round(t)),xGrid0-0.45,y,zBack,'soe3d-tick');
+  });
+  const gl=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(pts,3)),
+    new THREE.LineBasicMaterial({color:0x22304f,transparent:true,opacity:.6}));
+  scene.dynamic.add(gl);
+
+  // barras
+  for(let i=0;i<nInd;i++){
+    const x=baseX+i*IND_GAP;
+    // rótulo do indicador no piso
+    scene.addLabel(BAR_LABELS[i], x, 0.1, baseZ+(nSc-1)*SCEN_GAP+SCEN_GAP*0.9, '');
+    for(let j=0;j<nSc;j++){
+      const s=list[j];
+      const vals=[s.servico, s.capital/1e6, s.custoEstoque/1e6, s.ebitda/1e6];
+      const v=vals[i];
+      const h=Math.max(0.04, v/scaleMax*BAR_H);
+      const z=baseZ+j*SCEN_GAP;
+      const rec=s.key===reco.key;
+      const col=new THREE.Color(s.col);
+      const mat=new THREE.MeshStandardMaterial({color:col,metalness:.25,roughness:.45,
+        emissive:col,emissiveIntensity:rec?.55:.12,transparent:true,opacity:.96});
+      const geo=new THREE.BoxGeometry(BAR_W,h,BAR_W);
+      const bar=new THREE.Mesh(geo,mat);
+      bar.position.set(x,h/2,z);
+      // valor exato no tooltip
+      const valStr=i===0?fmtPct(v):fmtMi(v);
+      bar.userData.tip={title:s.name,row:BAR_LABELS[i],val:valStr,col:s.col};
+      scene.dynamic.add(bar);
+      scene.pickables.push(bar);
+      // contorno destacado para o recomendado
+      if(rec){
+        const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo),
+          new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.85}));
+        edges.position.copy(bar.position); scene.dynamic.add(edges);
+      }
+    }
+  }
+}
+
+/* ===================================================================
+   GRÁFICO 2 — RADAR 3D
+   4 eixos a 90°: Serviço(topo), Rentabilidade(dir), Efic.Capital(baixo), Baixo Custo(esq)
+   polígono preenchido translúcido por cenário, empilhado em Z, contorno + vértices
+   =================================================================== */
+const RADAR_AXES=['Serviço','Rentabilidade','Efic. Capital','Baixo Custo'];
+const R_MAX=6;          // raio do anel 100
+// ângulos: topo, direita, baixo, esquerda (no plano XY, depois deitado em Z)
+const AX_ANG=[Math.PI/2, 0, -Math.PI/2, Math.PI];
+
+function radarPoint(valPct,angle){
+  const r=valPct/100*R_MAX;
+  return new THREE.Vector3(Math.cos(angle)*r, Math.sin(angle)*r, 0);
+}
+
+function makeRadar(scene,list,reco){
+  scene.clearDynamic();
+
+  // anéis concêntricos 25/50/75/100 + rótulo do nível
+  [25,50,75,100].forEach(t=>{
+    const r=t/100*R_MAX;
+    const seg=64, pos=[];
+    for(let k=0;k<=seg;k++){ const a=k/seg*Math.PI*2; pos.push(Math.cos(a)*r,Math.sin(a)*r,0); }
+    const ring=new THREE.Line(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(pos,3)),
+      new THREE.LineBasicMaterial({color:0x22304f,transparent:true,opacity:t===100?.85:.45}));
+    scene.dynamic.add(ring);
+    scene.addLabel(String(t), 0.18, r, 0, 'soe3d-tick');
+  });
+
+  // spokes + rótulos dos eixos
+  const spk=[];
+  AX_ANG.forEach((a,idx)=>{
+    spk.push(0,0,0, Math.cos(a)*R_MAX, Math.sin(a)*R_MAX, 0);
+    const lp=radarPoint(116,a);
+    scene.addLabel(RADAR_AXES[idx], lp.x, lp.y, lp.z, '');
+  });
+  scene.dynamic.add(new THREE.LineSegments(
+    new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(spk,3)),
+    new THREE.LineBasicMaterial({color:0x22304f,transparent:true,opacity:.6})));
+
+  // um polígono preenchido por cenário, empilhado em Z
+  list.forEach((s,si)=>{
+    const rec=s.key===reco.key;
+    const zoff=si*0.22;                    // distingue camadas
+    // valores 0..100 na MESMA ordem do 2D
+    const vals=[s.parts.servico*100, s.parts.ebitda*100, s.parts.capital*100, s.parts.custo*100];
+    const verts=vals.map((v,i)=>radarPoint(v,AX_ANG[i]));
+
+    // forma preenchida (translúcida)
+    const shape=new THREE.Shape();
+    verts.forEach((p,i)=> i===0?shape.moveTo(p.x,p.y):shape.lineTo(p.x,p.y));
+    shape.closePath();
+    const fill=new THREE.Mesh(new THREE.ShapeGeometry(shape),
+      new THREE.MeshBasicMaterial({color:new THREE.Color(s.col),transparent:true,
+        opacity:rec?.34:.20,side:THREE.DoubleSide,depthWrite:false}));
+    fill.position.z=zoff; scene.dynamic.add(fill);
+
+    // contorno (LineLoop)
+    const lp=[]; verts.forEach(p=>lp.push(p.x,p.y,zoff));
+    const loop=new THREE.LineLoop(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(lp,3)),
+      new THREE.LineBasicMaterial({color:new THREE.Color(s.col),transparent:true,opacity:rec?1:.85,linewidth:2}));
+    scene.dynamic.add(loop);
+
+    // vértices (esferas pickáveis com valor exato)
+    verts.forEach((p,i)=>{
+      const dot=new THREE.Mesh(new THREE.SphereGeometry(rec?0.16:0.13,16,16),
+        new THREE.MeshStandardMaterial({color:new THREE.Color(s.col),emissive:new THREE.Color(s.col),
+          emissiveIntensity:rec?.6:.25,metalness:.2,roughness:.4}));
+      dot.position.set(p.x,p.y,zoff);
+      dot.userData.tip={title:s.name,row:RADAR_AXES[i],val:ptBR.format(vals[i]).replace(',0','')+' / 100',col:s.col};
+      scene.dynamic.add(dot); scene.pickables.push(dot);
+    });
+  });
+}
+
+/* ---------- legenda HTML (cores dos cenários) ---------- */
+function renderLegend(mount,list,reco){
+  let lg=mount.querySelector('.soe3d-legend');
+  if(!lg){ lg=document.createElement('div'); lg.className='soe3d-legend'; mount.appendChild(lg); }
+  lg.innerHTML=list.map(s=>'<span class="lg"><i style="background:'+s.col+'"></i>'+s.name+(s.key===reco.key?' ★':'')+'</span>').join('');
+}
+
+/* ===================================================================
+   BOOT
+   =================================================================== */
+(function boot(){
+  if(!hasWebGL()) return;   // mantém Chart.js 2D visível como fallback
+  try{
+    const barsMount=document.getElementById('scenBars3D');
+    const radarMount=document.getElementById('scenRadar3D');
+    const barsCanvas=document.getElementById('chScenBars');
+    const radarCanvas=document.getElementById('chScenRadar');
+    if(!barsMount||!radarMount) return;
+
+    const barsScene=new Scene3D('scenBars3D');
+    barsScene.setHome(new THREE.Vector3(9,9,15), new THREE.Vector3(0,3,0));
+    barsScene.start();
+
+    const radarScene=new Scene3D('scenRadar3D');
+    radarScene.setHome(new THREE.Vector3(0,3.5,13), new THREE.Vector3(0,0,0.5));
+    radarScene.start();
+
+    // mostra 3D, esconde os canvas 2D
+    barsMount.style.display='block'; barsCanvas.style.display='none';
+    radarMount.style.display='block'; radarCanvas.style.display='none';
+
+    window.SOE3D={
+      ready:true,
+      bars(list,reco){ makeBars(barsScene,list,reco); renderLegend(barsMount,list,reco); barsScene.start(); },
+      radar(list,reco){ makeRadar(radarScene,list,reco); renderLegend(radarMount,list,reco); radarScene.start(); }
+    };
+
+    // se o simulador já calculou antes do módulo carregar, renderiza já
+    if(window.__scen){ window.SOE3D.bars(window.__scen.list,window.__scen.reco); window.SOE3D.radar(window.__scen.list,window.__scen.reco); }
+  }catch(e){
+    // qualquer falha do módulo => fallback 2D permanece
+    console.warn('SOE3D falhou, mantendo Chart.js 2D:',e);
+    window.SOE3D={ready:false};
+  }
+})();
 </script>
 </body>
 </html>
