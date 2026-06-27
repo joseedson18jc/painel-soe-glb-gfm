@@ -62,14 +62,15 @@ fi
 log "Python: $(command -v ${PYTHON_BIN}) ($(${PYTHON_BIN} --version 2>&1))"
 
 # --- Flags de producao ---
-# --source vem do .env (SOE_SOURCE: sql | powerbi | fixture). Default seguro: fixture.
-SOURCE="${SOE_SOURCE:-fixture}"
+# --source vem do .env (SOE_SOURCE: sql | powerbi | sqlite). Default seguro: sqlite (demo).
+SOURCE="${SOE_SOURCE:-sqlite}"
 
-log "Executando ETL: ${PYTHON_BIN} ${ETL_SCRIPT} --source ${SOURCE} --push"
+log "Executando ETL: ${PYTHON_BIN} ${ETL_SCRIPT} --source ${SOURCE}"
 
-# O ETL gera ../data.json e faz git push (flag --push = modo producao).
+# Em modo producao (sem --dry-run) o ETL ja gera ../data.json, envia o e-mail
+# de alerta e faz git push por padrao. (Nao existe flag --push.)
 set +e
-"${PYTHON_BIN}" "${ETL_SCRIPT}" --source "${SOURCE}" --push
+"${PYTHON_BIN}" "${ETL_SCRIPT}" --source "${SOURCE}"
 RC=$?
 set -e
 

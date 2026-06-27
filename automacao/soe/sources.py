@@ -214,6 +214,7 @@ def _linhas_from_env() -> List[Dict[str, Any]]:
 # --------------------------------------------------------------------------- #
 _ADAPTERS = {
     "sqlite": _from_sqlite,
+    "fixture": _from_sqlite,  # alias: 'fixture' == 'sqlite' (modo demo, SQLite local)
     "sql": _from_sql,
     "powerbi": _from_powerbi,
 }

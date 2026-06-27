@@ -1,12 +1,12 @@
 {
   "meta": {
     "schema_version": 1,
-    "generated_at_utc": "2026-06-27T07:04:36Z",
-    "generated_at_brt": "2026-06-27 04:04:36",
+    "generated_at_utc": "2026-06-27T07:16:11Z",
+    "generated_at_brt": "2026-06-27 04:16:11",
     "run_label": "08:00 BRT",
     "week": "S26/26",
-    "version": 49,
-    "source": "sqlite",
+    "version": 50,
+    "source": "fixture",
     "monte_carlo_samples": 50000,
     "validation": {
       "status": "ok",

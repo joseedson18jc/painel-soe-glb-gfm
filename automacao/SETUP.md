@@ -72,26 +72,35 @@ Escolha **um** adaptador e ajuste `SOE_SOURCE` no `.env`.
 Preencha `SOE_SQL_URL` e `SOE_SQL_QUERY`. A query precisa devolver as colunas
 com os **aliases do contrato** que o ETL espera:
 
+Os **ALIASES devem ser EXATAMENTE** os 15 abaixo (lista canonica em
+`soe/sources.py` -> `EXPECTED_COLUMNS`). O ETL **ignora** colunas com outros
+nomes — alias errado = dado vazio.
+
 ```sql
--- Exemplo (ajuste tabelas/joins a sua base):
+-- Exemplo (ajuste as colunas de origem/joins a sua base; mantenha os aliases):
 SELECT
-    sku                          AS sku,
-    descricao                    AS descricao,
-    familia                      AS familia,
-    semana                       AS semana,            -- ISO week ou data da segunda-feira
-    demanda_prevista             AS demanda,
-    producao_planejada           AS producao,
-    estoque_atual                AS estoque,
-    estoque_seguranca            AS estoque_seguranca,
-    lead_time_dias               AS lead_time,
-    desvio_padrao_demanda        AS sigma_demanda,
-    nivel_servico_alvo           AS nivel_servico,
-    otif                         AS otif,
-    capacidade_utilizada         AS capacidade
+    sku                    AS sku,
+    familia                AS familia,
+    bitola                 AS bitola,
+    demanda_semana_t       AS demanda_sem_t,        -- demanda da semana (t)
+    desvio_demanda_t       AS sigma_sem_t,          -- desvio-padrao semanal (t) [pode ser NULL]
+    plano_producao_t       AS plano_t,              -- plano de producao (t)
+    estoque_atual_t        AS estoque_t,            -- estoque livre atual (t)
+    producao_realizada_t   AS producao_real_t,      -- producao realizada (t)
+    demanda_prevista_t     AS demanda_prev_t,       -- previsao (t) p/ MAPE/vies
+    demanda_realizada_t    AS demanda_real_t,       -- realizado (t) p/ MAPE/vies
+    otif                   AS otif_pct,             -- OTIF do SKU (%)
+    lead_time_dias         AS lead_time_dias,       -- lead time (dias)
+    preco_venda            AS preco_rs_t,           -- preco de venda (R$/t)
+    margem_ebitda          AS ebitda_rs_t,          -- margem EBITDA (R$/t)
+    custo_carregamento     AS custo_estoque_rs_t    -- custo de carregar estoque (R$/t)
 FROM vw_plano_soe
-WHERE semana BETWEEN @inicio AND @fim
-ORDER BY familia, sku, semana;
+ORDER BY familia, sku;
 ```
+
+> Capacidades de linha (opcional): defina `SOE_LINHAS_JSON` no `.env`
+> (`[{"linha":"Laminacao","capacidade_t":5000,"utilizado_t":4300}]`). Sem isto,
+> as metricas de capacidade/utilizacao ficam vazias.
 
 Exemplo de `SOE_SQL_URL` (SQL Server):
 
@@ -102,34 +111,35 @@ mssql+pyodbc://usuario:senha@host:1433/BaseSOE?driver=ODBC+Driver+18+for+SQL+Ser
 ### Opcao B — Power BI (`SOE_SOURCE=powerbi`)
 
 Preencha `PBI_TENANT_ID`, `PBI_CLIENT_ID`, `PBI_CLIENT_SECRET`,
-`PBI_WORKSPACE_ID`, `PBI_DATASET_ID` (service principal com acesso ao
-workspace) e `PBI_DAX` com uma consulta que devolva as mesmas colunas:
+`PBI_DATASET_ID` (service principal com acesso ao dataset; `PBI_GROUP_ID` do
+workspace e opcional) e `PBI_DAX_QUERY` com uma consulta que devolva as mesmas
+15 colunas (os aliases entre aspas devem ser exatamente estes):
 
 ```dax
 EVALUATE
 SELECTCOLUMNS(
-    FILTER(
-        PlanoSOE,
-        PlanoSOE[Semana] >= DATE(2026,1,1)
-    ),
-    "sku",               PlanoSOE[SKU],
-    "descricao",         PlanoSOE[Descricao],
-    "familia",           PlanoSOE[Familia],
-    "semana",            PlanoSOE[Semana],
-    "demanda",           PlanoSOE[DemandaPrevista],
-    "producao",          PlanoSOE[ProducaoPlanejada],
-    "estoque",           PlanoSOE[EstoqueAtual],
-    "estoque_seguranca", PlanoSOE[EstoqueSeguranca],
-    "lead_time",         PlanoSOE[LeadTimeDias],
-    "sigma_demanda",     PlanoSOE[DesvioDemanda],
-    "nivel_servico",     PlanoSOE[NivelServicoAlvo],
-    "otif",              PlanoSOE[OTIF],
-    "capacidade",        PlanoSOE[CapacidadeUtilizada]
+    PlanoSOE,
+    "sku",                PlanoSOE[SKU],
+    "familia",            PlanoSOE[Familia],
+    "bitola",             PlanoSOE[Bitola],
+    "demanda_sem_t",      PlanoSOE[DemandaSemana],
+    "sigma_sem_t",        PlanoSOE[DesvioDemanda],
+    "plano_t",            PlanoSOE[PlanoProducao],
+    "estoque_t",          PlanoSOE[EstoqueAtual],
+    "producao_real_t",    PlanoSOE[ProducaoRealizada],
+    "demanda_prev_t",     PlanoSOE[DemandaPrevista],
+    "demanda_real_t",     PlanoSOE[DemandaRealizada],
+    "otif_pct",           PlanoSOE[OTIF],
+    "lead_time_dias",     PlanoSOE[LeadTimeDias],
+    "preco_rs_t",         PlanoSOE[PrecoVenda],
+    "ebitda_rs_t",        PlanoSOE[MargemEBITDA],
+    "custo_estoque_rs_t", PlanoSOE[CustoCarregamento]
 )
 ```
 
-> Os nomes dos campos retornados devem bater com os aliases do contrato. Em caso
-> de duvida sobre o contrato exato, confira o cabecalho do `soe_etl.py`.
+> Os campos retornados devem bater com os 15 aliases do contrato (lista canonica
+> em `soe/sources.py` -> `EXPECTED_COLUMNS`). O prefixo de tabela do DAX
+> (`PlanoSOE[...]`) e removido automaticamente.
 
 ---
 

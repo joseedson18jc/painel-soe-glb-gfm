@@ -243,8 +243,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
 def parse_args(argv=None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="ETL do painel S&OE GLB-GFM.")
-    p.add_argument("--source", choices=["sql", "powerbi", "sqlite"], default=None,
-                   help="Fonte de dados (default: SOE_SOURCE do .env ou 'sqlite').")
+    p.add_argument("--source", choices=["sql", "powerbi", "sqlite", "fixture"], default=None,
+                   help="Fonte de dados (default: SOE_SOURCE do .env ou 'sqlite'; 'fixture'=='sqlite').")
     p.add_argument("--dry-run", action="store_true",
                    help="Nao envia e-mail e nao publica (apenas grava data.json).")
     p.add_argument("--no-email", action="store_true", help="Nao envia e-mail.")
