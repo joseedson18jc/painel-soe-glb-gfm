@@ -730,6 +730,8 @@ const Z = {90:1.28, 95:1.65, 97:1.88, 99:2.33};
 function fmt(n,d=0){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 // alias para formatação numérica pt-BR (usado pelo simulador) — sempre vírgula decimal
 function nf(n,d=1){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+// percentual pt-BR a partir de uma razão 0–1 (vírgula decimal)
+function pct(r,d=1){return nf(r*100,d)+'%';}
 
 const totalDem = SKUS.reduce((a,s)=>a+s.demSem,0);          // kg/sem
 const totalEst = SKUS.reduce((a,s)=>a+s.estoque,0);
@@ -932,14 +934,14 @@ function buildCockpitCharts(){
    POPULAR KPIs DE TEXTO
    ============================================================ */
 function fillKpis(){
-  document.getElementById('otifBig').textContent=(otifAgg*100).toFixed(1)+'%';
-  document.getElementById('otifFill').textContent=(fillRate*100).toFixed(1)+'%';
-  document.getElementById('otifOnt').textContent=(onTime*100).toFixed(1)+'%';
+  document.getElementById('otifBig').textContent=pct(otifAgg);
+  document.getElementById('otifFill').textContent=pct(fillRate);
+  document.getElementById('otifOnt').textContent=pct(onTime);
   document.getElementById('otifTag').className='tag '+(otifAgg>=0.96?'ok':'warn');
 
-  document.getElementById('adhBig').textContent=(adhAgg*100).toFixed(1)+'%';
-  document.getElementById('adhDem').textContent=(adhDem*100).toFixed(1)+'%';
-  document.getElementById('adhProd').textContent=(adhProd*100).toFixed(1)+'%';
+  document.getElementById('adhBig').textContent=pct(adhAgg);
+  document.getElementById('adhDem').textContent=pct(adhDem);
+  document.getElementById('adhProd').textContent=pct(adhProd);
   document.getElementById('adhTag').className='tag '+(adhAgg>=0.95?'ok':'warn');
 
   document.getElementById('kpiCov').innerHTML=fmt(covAvg,1)+'<span class="u">dias</span>';
