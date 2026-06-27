@@ -1,0 +1,31 @@
+# =============================================================================
+# Dependencias do ETL S&OE (painel GLB-GFM)
+# =============================================================================
+#
+# O NUCLEO do soe_etl.py roda SOMENTE com a biblioteca padrao do Python 3
+# (json, sqlite3, smtplib, email, urllib, random, statistics, subprocess...).
+# Ou seja: SEM instalar NADA, a fonte "fixture" (SQLite local) e o e-mail de
+# alerta (smtplib/Gmail) ja funcionam.
+#
+# As dependencias abaixo sao OPCIONAIS e estao COMENTADAS de proposito.
+# Descomente APENAS as do adaptador que voce vai usar (ver SETUP.md).
+#
+#   pip install -r requirements.txt   # instala so o que estiver descomentado
+# =============================================================================
+
+# --- Aceleracao do Monte Carlo (opcional) -----------------------------------
+# Sem numpy o ETL roda o Monte Carlo em Python puro (statistics/random) -
+# funciona, so e mais lento. Com numpy, as simulacoes ficam muito mais rapidas.
+# numpy>=1.26
+
+# --- Fonte SQL (SOE_SOURCE=sql) ---------------------------------------------
+# Necessario apenas se for ler de banco SQL (SQL Server/Postgres/etc).
+# pyodbc precisa do driver ODBC do SO instalado (ex.: msodbcsql18).
+# SQLAlchemy>=2.0
+# pyodbc>=5.1
+
+# --- Fonte Power BI (SOE_SOURCE=powerbi) ------------------------------------
+# Necessario apenas para consultar dataset via API REST do Power BI / DAX,
+# autenticando com Azure AD (service principal) via MSAL.
+# requests>=2.31
+# msal>=1.28

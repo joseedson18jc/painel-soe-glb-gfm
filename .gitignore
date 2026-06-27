@@ -1,0 +1,9 @@
+# --- Automacao S&OE: segredos e artefatos locais (NUNCA versionar) ---
+automacao/.env
+automacao/logs/
+automacao/.venv/
+automacao/fixtures/*.db
+
+# --- Python ---
+__pycache__/
+*.py[cod]

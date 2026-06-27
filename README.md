@@ -26,4 +26,26 @@ Nível de serviço/OTIF · Aderência ao plano · Balanço demanda × suprimento
 
 HTML/CSS/JS puro · [Chart.js 4.4](https://www.chartjs.org/) · [SheetJS](https://sheetjs.com/) (Excel) · jsPDF + html2canvas (PDF) · fonte Inter. Sem build, sem backend — basta abrir no navegador.
 
-> Todos os números são **dados de demonstração sintéticos**.
+> Todos os números são **dados de demonstração sintéticos** quando a automação não está ativa.
+
+## 🔄 Automação (atualização 2x/dia)
+
+Quando ativada, a pasta [`automacao/`](automacao/) mantém os painéis atualizados **automaticamente, duas vezes por dia**, sem intervenção manual.
+
+**Fluxo:**
+
+```
+SQL Server / Power BI  →  soe_etl.py  →  data.json  →  git push  →  GitHub Pages
+                          (08:00 e 13:59 BRT)                         (publica)
+                               │
+                               └──→  e-mail de alerta → emiliodias1@gmail.com
+                                     (ruptura · excesso · capacidade · falha de ETL)
+```
+
+- **Fonte:** banco **SQL** (`SOE_SOURCE=sql`) ou dataset **Power BI / DAX** (`SOE_SOURCE=powerbi`); modo demo via `fixture` (SQLite local).
+- **Processamento:** `soe_etl.py` recalcula os KPIs de S&OE e roda uma simulação **Monte Carlo** de risco (acelerada por `numpy` quando disponível), gravando `data.json`.
+- **Publicação:** `git push` aciona o **GitHub Pages**; os três painéis passam a ler o `data.json` mais recente.
+- **Alerta em tempo real:** o dashboard lê o `data.json` e destaca os alertas (rupturas/excessos/atrasos) assim que a página carrega — quem abrir o painel já vê o estado mais recente, e os casos críticos também saem por e-mail para `emiliodias1@gmail.com`.
+- **Agendamento:** `launchd` no Mac dispara o wrapper [`automacao/run.sh`](automacao/run.sh) às **08:00** e **13:59** (horário de Brasília).
+
+➡️ **Passo a passo de instalação e ativação:** [`automacao/SETUP.md`](automacao/SETUP.md). Só ative o `launchd` depois de preencher o `.env`.

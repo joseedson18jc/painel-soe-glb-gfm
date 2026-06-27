@@ -6,7 +6,7 @@
 <title>Laboratório de Cenários S&OE — Painel Analítico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -50,10 +50,12 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
     line-height:1.45;
+    text-rendering:optimizeLegibility;
   }
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
   ::selection{background:rgba(139,92,246,.35)}
   a{color:var(--violet-2);text-decoration:none}
+  :focus-visible{outline:2px solid var(--violet-2);outline-offset:2px}
 
   /* ---------- Layout ---------- */
   .wrap{max-width:1340px;margin:0 auto;padding:22px 26px 70px}
@@ -63,7 +65,7 @@
     display:flex;align-items:center;justify-content:space-between;gap:20px;
     flex-wrap:wrap;padding:14px 0 18px;border-bottom:1px solid var(--line-soft);
   }
-  .brand{display:flex;align-items:center;gap:14px}
+  .brand{display:flex;align-items:center;gap:14px;min-width:0}
   .logo{
     width:50px;height:50px;border-radius:14px;flex:0 0 auto;
     background:linear-gradient(140deg,var(--violet),var(--blue) 55%,var(--cyan));
@@ -78,12 +80,14 @@
     background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);
     padding:2px 9px;border-radius:30px;
   }
-  .topright{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .topright{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .clock{text-align:right}
   .clock .time{font-size:1.32rem;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums}
   .clock .date{font-size:.72rem;color:var(--txt-2);text-transform:capitalize}
   .pulse{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;color:var(--green);font-weight:600}
+  .pulse.demo{color:var(--amber)}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:pulse 2s infinite}
+  .pulse.demo .dot{background:var(--amber)}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
   .btn{
     font-family:inherit;font-size:.76rem;font-weight:600;color:var(--txt);cursor:pointer;
@@ -91,10 +95,92 @@
     display:inline-flex;align-items:center;gap:7px;transition:.18s;
   }
   .btn:hover{background:var(--panel-hover);border-color:var(--violet);transform:translateY(-1px)}
-  .btn:focus-visible{outline:2px solid var(--violet-2);outline-offset:2px}
   .btn svg{width:15px;height:15px}
   .btn.primary{background:linear-gradient(135deg,var(--violet),var(--blue));border:none}
   .btn.primary:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.6;cursor:wait;transform:none}
+
+  /* ---------- Status bar (chip + badge de validação) ---------- */
+  .statusbar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0;
+    background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:11px 15px;
+    box-shadow:var(--shadow-soft);
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:600;color:var(--txt);
+  }
+  .chip .ci{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(34,211,238,.14);flex:0 0 auto}
+  .chip .ci svg{width:16px;height:16px;color:var(--cyan)}
+  .chip .cl{font-size:.64rem;color:var(--txt-3);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  .chip .cv{font-size:.84rem;font-variant-numeric:tabular-nums}
+  .chip .cv small{color:var(--txt-2);font-weight:500}
+  .statusbar .sep{width:1px;height:26px;background:var(--line);flex:0 0 auto}
+  .vbadge{
+    display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:700;letter-spacing:.02em;
+    padding:6px 12px;border-radius:30px;cursor:pointer;transition:.18s;border:1px solid transparent;
+  }
+  .vbadge .vdot{width:8px;height:8px;border-radius:50%}
+  .vbadge.ok{background:rgba(52,211,153,.14);color:var(--green);border-color:rgba(52,211,153,.32)}
+  .vbadge.ok .vdot{background:var(--green)}
+  .vbadge.warn{background:rgba(251,191,36,.14);color:var(--amber);border-color:rgba(251,191,36,.32)}
+  .vbadge.warn .vdot{background:var(--amber)}
+  .vbadge.error{background:rgba(248,113,113,.14);color:var(--red);border-color:rgba(248,113,113,.34)}
+  .vbadge.error .vdot{background:var(--red)}
+  .vbadge:hover{filter:brightness(1.12);transform:translateY(-1px)}
+  .deltachip{
+    display:inline-flex;align-items:center;gap:7px;font-size:.74rem;font-weight:600;color:var(--txt-2);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:30px;padding:6px 12px;cursor:pointer;transition:.18s;
+  }
+  .deltachip:hover{border-color:var(--violet);color:var(--txt)}
+  .deltachip svg{width:14px;height:14px;color:var(--violet-2)}
+  .statusbar .spacer{margin-left:auto}
+
+  /* ---------- Toast ---------- */
+  .toast-wrap{position:fixed;right:22px;bottom:22px;z-index:200;display:flex;flex-direction:column;gap:12px;max-width:min(380px,calc(100vw - 32px))}
+  .toast{
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-left:4px solid var(--green);border-radius:14px;
+    padding:14px 15px;box-shadow:var(--shadow);transform:translateX(120%);opacity:0;
+    transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .42s;
+  }
+  .toast.show{transform:translateX(0);opacity:1}
+  .toast .th{display:flex;align-items:center;gap:9px;font-size:.86rem;font-weight:700}
+  .toast .th .tic{width:26px;height:26px;border-radius:8px;background:rgba(52,211,153,.16);display:grid;place-items:center;flex:0 0 auto}
+  .toast .th .tic svg{width:15px;height:15px;color:var(--green)}
+  .toast .th .tx{margin-left:auto;cursor:pointer;color:var(--txt-3);background:none;border:none;font-size:1.1rem;line-height:1;padding:2px 4px;border-radius:6px;transition:.15s}
+  .toast .th .tx:hover{color:var(--txt);background:var(--panel-hover)}
+  .toast .tb{font-size:.77rem;color:var(--txt-2);margin-top:7px;line-height:1.45}
+  .toast .ta{display:flex;gap:8px;margin-top:11px}
+  .toast .ta button{font-family:inherit;font-size:.73rem;font-weight:600;cursor:pointer;border-radius:9px;padding:7px 11px;transition:.16s;border:1px solid var(--line)}
+  .toast .ta .ap{background:linear-gradient(135deg,var(--green-2),var(--cyan));border:none;color:#04210f}
+  .toast .ta .ap:hover{filter:brightness(1.08)}
+  .toast .ta .as{background:var(--panel-2);color:var(--txt)}
+  .toast .ta .as:hover{background:var(--panel-hover);border-color:var(--violet)}
+
+  /* ---------- Modal (delta / issues) ---------- */
+  .modal-back{position:fixed;inset:0;background:rgba(4,7,15,.66);backdrop-filter:blur(3px);z-index:210;
+    display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:.25s}
+  .modal-back.show{opacity:1;pointer-events:auto}
+  .modal{background:linear-gradient(165deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:18px;
+    padding:22px;max-width:520px;width:100%;box-shadow:var(--shadow);transform:translateY(14px) scale(.98);transition:.28s cubic-bezier(.22,1,.36,1);max-height:84vh;overflow:auto}
+  .modal-back.show .modal{transform:none}
+  .modal h3{font-size:1.02rem;font-weight:700;display:flex;align-items:center;gap:9px}
+  .modal .mclose{margin-left:auto;cursor:pointer;background:none;border:none;color:var(--txt-3);font-size:1.3rem;line-height:1;transition:.15s}
+  .modal .mclose:hover{color:var(--txt)}
+  .modal .mhead{display:flex;align-items:center;margin-bottom:14px}
+  .delta-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px}
+  .delta-cell{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .delta-cell .dl{font-size:.7rem;color:var(--txt-2);text-transform:uppercase;letter-spacing:.05em}
+  .delta-cell .dv{font-size:1.25rem;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+  .issue{display:flex;gap:10px;align-items:flex-start;background:var(--bg-2);border:1px solid var(--line);border-left-width:3px;border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .issue.warn{border-left-color:var(--amber)}
+  .issue.error{border-left-color:var(--red)}
+  .issue .il{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:6px;flex:0 0 auto}
+  .issue.warn .il{background:rgba(251,191,36,.16);color:var(--amber)}
+  .issue.error .il{background:rgba(248,113,113,.16);color:var(--red)}
+  .issue .it{font-size:.78rem;color:var(--txt)}
+  .issue .it b{color:var(--violet-2)}
 
   /* ---------- Tabs ---------- */
   nav.tabs{
@@ -110,7 +196,6 @@
   .tab svg{width:16px;height:16px;opacity:.85}
   .tab:hover{color:var(--txt);background:var(--panel-2)}
   .tab.active{color:#fff;background:linear-gradient(135deg,rgba(139,92,246,.9),rgba(59,130,246,.9));box-shadow:0 6px 18px rgba(99,102,241,.35)}
-  .tab:focus-visible{outline:2px solid var(--violet-2);outline-offset:2px}
 
   /* ---------- Sections ---------- */
   .view{display:none;animation:fade .4s ease}
@@ -178,12 +263,12 @@
   select.filt:focus{outline:none;border-color:var(--violet)}
 
   /* ---------- Table ---------- */
-  .tbl-wrap{overflow-x:auto;border-radius:var(--r-sm)}
+  .tbl-wrap{overflow-x:auto;border-radius:var(--r-sm);-webkit-overflow-scrolling:touch}
   table{width:100%;border-collapse:collapse;font-size:.82rem}
   thead th{
     text-align:left;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
     color:var(--txt-2);padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap;
-    position:sticky;top:0;background:var(--panel);cursor:pointer;user-select:none;
+    position:sticky;top:0;background:var(--panel);cursor:pointer;user-select:none;z-index:2;
   }
   thead th:hover{color:var(--txt)}
   thead th.num,tbody td.num{text-align:right;font-variant-numeric:tabular-nums}
@@ -195,6 +280,7 @@
   .mini-bar{height:6px;width:70px;border-radius:6px;background:var(--line);display:inline-block;vertical-align:middle;overflow:hidden}
   .mini-bar i{display:block;height:100%;border-radius:6px}
   .pill{font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:7px}
+  .spark{display:inline-block;vertical-align:middle}
 
   /* ---------- Scenario cards ---------- */
   .scen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
@@ -228,7 +314,6 @@
     background:#fff;border:3px solid var(--violet);box-shadow:0 2px 8px rgba(0,0,0,.4);transition:.12s}
   input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18);border-color:var(--cyan)}
   input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--violet);cursor:pointer}
-  input[type=range]:focus-visible{outline:2px solid var(--violet-2);outline-offset:4px}
 
   .reco-banner{
     display:flex;align-items:center;gap:14px;background:linear-gradient(120deg,rgba(16,185,129,.16),rgba(34,211,238,.08));
@@ -255,6 +340,12 @@
   .alert .at{font-size:.84rem;font-weight:600}
   .alert .ad{font-size:.74rem;color:var(--txt-2);margin-top:2px}
 
+  /* ---------- Monte Carlo painel ---------- */
+  .mc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:14px}
+  .mc-cell{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .mc-cell .ml{font-size:.68rem;color:var(--txt-2);text-transform:uppercase;letter-spacing:.04em}
+  .mc-cell .mv{font-size:1.3rem;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+
   /* ---------- Methodology ---------- */
   .method{display:grid;gap:16px}
   .formula{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
@@ -272,23 +363,43 @@
 
   /* tooltips simples */
   [data-tip]{position:relative;cursor:help}
-  [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+  [data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
     background:#05080f;color:var(--txt);font-size:.72rem;font-weight:500;padding:8px 11px;border-radius:9px;white-space:normal;width:max-content;max-width:240px;
     border:1px solid var(--line);box-shadow:var(--shadow);z-index:50;line-height:1.4}
-  [data-tip]:hover::before{content:"";position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);
+  [data-tip]:hover::before,[data-tip]:focus-visible::before{content:"";position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);
     border:6px solid transparent;border-top-color:#05080f;z-index:50}
+
+  /* ---------- Skeleton ---------- */
+  .skel{position:relative;overflow:hidden;background:var(--panel-2);border-radius:10px}
+  .skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+    transform:translateX(-100%);animation:shimmer 1.3s infinite}
+  @keyframes shimmer{100%{transform:translateX(100%)}}
+  .kpi.skel-kpi{height:128px}
+  .chart-box.loading{display:grid;place-items:center}
+  .spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--violet);animation:spin .8s linear infinite}
+  @keyframes spin{100%{transform:rotate(360deg)}}
+  .chart-loading{position:absolute;inset:0;display:grid;place-items:center;background:rgba(18,26,46,.5);border-radius:var(--r-sm);z-index:5}
 
   footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line-soft);font-size:.74rem;color:var(--txt-3);
     display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
 
   @media (max-width:980px){
-    .grid-2,.grid-3,.grid-12-8,.grid-8-12,.scen-grid,.ztable{grid-template-columns:1fr}
-    .ztable{grid-template-columns:1fr 1fr}
+    .grid-2,.grid-3,.grid-12-8,.grid-8-12,.scen-grid,.ztable,.mc-stats{grid-template-columns:1fr}
+    .ztable,.mc-stats,.delta-grid{grid-template-columns:1fr 1fr}
+    header.topbar{gap:14px}
+    .topright{width:100%;justify-content:space-between}
   }
   @media (max-width:600px){
     .wrap{padding:16px 14px 50px}
     .clock .time{font-size:1.05rem}
     .kpi .kval{font-size:1.5rem}
+    nav.tabs{overflow-x:auto;flex-wrap:nowrap}
+    .toast-wrap{right:12px;left:12px;bottom:12px;max-width:none}
+    .statusbar .spacer{display:none}
+    .statusbar .sep{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important}
   }
 </style>
 </head>
@@ -310,7 +421,7 @@
       </div>
     </div>
     <div class="topright">
-      <div class="pulse"><span class="dot"></span> Dados ao vivo</div>
+      <div class="pulse" id="livePulse" data-tip="Origem dos dados"><span class="dot"></span> <span id="liveLabel">Conectando…</span></div>
       <div class="clock">
         <div class="time" id="clock">--:--:--</div>
         <div class="date" id="cdate">—</div>
@@ -319,6 +430,30 @@
       <button class="btn primary" id="btnPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>PDF</button>
     </div>
   </header>
+
+  <!-- STATUS BAR (chip de atualização + badge de validação + delta) -->
+  <div class="statusbar" aria-live="polite">
+    <div class="chip">
+      <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <div>
+        <div class="cl">Última atualização</div>
+        <div class="cv"><span id="chipTime">—</span> <small id="chipRun"></small></div>
+      </div>
+    </div>
+    <div class="sep" aria-hidden="true"></div>
+    <button class="vbadge ok" id="valBadge" type="button" aria-label="Status de validação dos dados">
+      <span class="vdot"></span><span id="valText">validando…</span>
+    </button>
+    <button class="deltachip" id="deltaChip" type="button" aria-label="Ver mudanças desde a execução anterior" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg>
+      <span id="deltaText">ver mudanças</span>
+    </button>
+    <div class="spacer"></div>
+    <div class="chip" data-tip="Semana de planejamento · versão da execução">
+      <div class="cl" style="margin-right:7px">Ciclo</div>
+      <div class="cv" style="color:var(--violet-2);font-weight:700"><span id="chipWeek">—</span> · v<span id="chipVer">—</span></div>
+    </div>
+  </div>
 
   <!-- TABS -->
   <nav class="tabs" role="tablist" aria-label="Seções do painel">
@@ -349,9 +484,9 @@
         <div class="card-head">
           <div>
             <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/></svg> Balanço Demanda × Suprimento</h3>
-            <div class="hint">Toneladas/semana planejadas vs. capacidade de suprimento — gap semanal de fechamento (W0–W13).</div>
+            <div class="hint">Toneladas/semana planejadas vs. capacidade de suprimento — gap semanal de fechamento.</div>
           </div>
-          <span class="badge b-violet">13 semanas</span>
+          <span class="badge b-violet" id="balWeeksBadge">— semanas</span>
         </div>
         <div class="chart-box" style="height:300px"><canvas id="chSupply"></canvas></div>
       </div>
@@ -393,7 +528,7 @@
       <div class="card-head">
         <div>
           <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg> Carteira de SKUs — Execução por Item</h3>
-          <div class="hint">15 SKUs siderúrgicos: OTIF, fill rate, aderência ao plano, cobertura e estoque de segurança. Clique nos cabeçalhos para ordenar.</div>
+          <div class="hint">SKUs siderúrgicos: OTIF, aderência ao plano, cobertura, estoque de segurança e tendência (6 sem). Clique nos cabeçalhos para ordenar.</div>
         </div>
       </div>
       <div class="toolbar">
@@ -404,9 +539,9 @@
         <select class="filt" id="famFilter" aria-label="Filtrar por família"><option value="">Todas as famílias</option></select>
         <select class="filt" id="statusFilter" aria-label="Filtrar por status">
           <option value="">Todos os status</option>
-          <option value="crit">Crítico</option>
-          <option value="warn">Atenção</option>
-          <option value="ok">Saudável</option>
+          <option value="critico">Crítico</option>
+          <option value="atencao">Atenção</option>
+          <option value="saudavel">Saudável</option>
         </select>
       </div>
       <div class="tbl-wrap">
@@ -415,12 +550,12 @@
             <tr>
               <th data-sort="sku">SKU / Família</th>
               <th data-sort="bitola">Bitola</th>
-              <th class="num" data-sort="demanda">Dem. (t/sem)</th>
-              <th class="num" data-sort="otif">OTIF</th>
-              <th class="num" data-sort="fill">Fill Rate</th>
-              <th class="num" data-sort="ader">Aderência</th>
-              <th class="num" data-sort="cobertura">Cobertura</th>
-              <th class="num" data-sort="ss">Est. Seg. (t)</th>
+              <th class="num" data-sort="demanda_sem_t">Dem. (t/sem)</th>
+              <th class="num" data-sort="otif_pct">OTIF</th>
+              <th class="num" data-sort="aderencia_pct">Aderência</th>
+              <th class="num" data-sort="cobertura_dias">Cobertura</th>
+              <th class="num" data-sort="safety_stock_t">Est. Seg. (t)</th>
+              <th data-sort="tend">Tendência</th>
               <th data-sort="statusRank">Status</th>
             </tr>
           </thead>
@@ -434,7 +569,7 @@
   <section class="view" id="view-acuracidade" role="tabpanel">
     <div class="section-head">
       <h2><span class="accent-bar"></span> Acuracidade de Previsão</h2>
-      <p>Qualidade do plano de demanda por família: erro percentual médio absoluto (MAPE), viés (tendência de sub/superestimação) e leitura semanal de planejado vs. realizado.</p>
+      <p>Qualidade do plano de demanda por família: erro percentual médio absoluto (MAPE), viés (tendência de sub/superestimação) e a distribuição de risco de cobertura via Monte Carlo (50.000 cenários).</p>
     </div>
 
     <div class="kpi-grid" id="kpiAcc"></div>
@@ -458,7 +593,7 @@
         <div class="card-head">
           <div>
             <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg> Demanda Planejada vs. Realizada</h3>
-            <div class="hint">Toneladas consolidadas por semana — desvio acumulado do horizonte.</div>
+            <div class="hint">Toneladas consolidadas por família — planejado vs. realizado.</div>
           </div>
         </div>
         <div class="chart-box" style="height:310px"><canvas id="chPlanReal"></canvas></div>
@@ -469,18 +604,19 @@
       <div class="card">
         <div class="card-head">
           <div>
-            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg> Distribuição de Risco de Cobertura</h3>
-            <div class="hint">Simulação determinística (estilo Monte Carlo) da cobertura sob variabilidade de demanda — densidade por faixa de dias.</div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg> Distribuição de Risco — Monte Carlo</h3>
+            <div class="hint">Histograma da cobertura sob variabilidade de demanda, vindo direto da automação. <b style="color:var(--violet-2)">Monte Carlo: 50.000 cenários.</b></div>
           </div>
-          <span class="badge b-violet">5.000 cenários</span>
+          <span class="badge b-violet" id="mcBadge">50.000 cenários</span>
         </div>
         <div class="chart-box" style="height:300px"><canvas id="chRisk"></canvas></div>
+        <div class="mc-stats" id="mcStats"></div>
       </div>
       <div class="card">
         <div class="card-head">
           <div>
-            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 3 3 4-7"/></svg> Tendência de Acuracidade (12 semanas)</h3>
-            <div class="hint">Evolução do MAPE consolidado e do nível de viés ao longo do tempo.</div>
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 3 3 4-7"/></svg> Balanço por Semana (kt)</h3>
+            <div class="hint">Demanda × suprimento semanal e cobertura projetada no horizonte.</div>
           </div>
         </div>
         <div class="chart-box" style="height:300px"><canvas id="chAccTrend"></canvas></div>
@@ -492,7 +628,7 @@
   <section class="view" id="view-simulador" role="tabpanel">
     <div class="section-head">
       <h2><span class="accent-bar"></span> Simulador Avançado de Cenários</h2>
-      <p>Ajuste os parâmetros e veja os 3 cenários recalcularem ao vivo: cartões, tabela comparativa e gráficos respondem instantaneamente. O motor combina serviço, EBITDA projetado e custo de estoque em um score ponderado.</p>
+      <p>Ajuste os parâmetros e veja os 3 cenários recalcularem ao vivo a partir dos parâmetros-base do <code>data.json</code>: cartões, tabela comparativa e gráficos respondem instantaneamente. O motor combina serviço, EBITDA projetado e custo de estoque em um score ponderado.</p>
     </div>
 
     <div class="reco-banner" id="recoBanner">
@@ -583,9 +719,9 @@
           <thead>
             <tr>
               <th>Indicador</th>
-              <th class="num" id="th-s1">Serviço 99%</th>
-              <th class="num" id="th-s2">Rentabilidade</th>
-              <th class="num" id="th-s3">Equilíbrio</th>
+              <th class="num" id="th-s1">Cenário 1</th>
+              <th class="num" id="th-s2">Cenário 2</th>
+              <th class="num" id="th-s3">Cenário 3</th>
             </tr>
           </thead>
           <tbody id="scenTableBody"></tbody>
@@ -686,7 +822,7 @@ Caixa Imobilizado = Estoque (t) × Preço Médio (R$/t)</div>
 
       <div class="card method-item">
         <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Score de Cenário</h4>
-        <p>Cada cenário recebe uma nota de 0 a 100 que pondera três dimensões: <b>serviço</b> (entregar bem ao cliente), <b>rentabilidade</b> (EBITDA projetado) e <b>eficiência de capital</b> (penaliza custo de estoque adicional). O cenário com maior score é recomendado automaticamente. Os pesos variam conforme a prioridade de cada cenário.</p>
+        <p>Cada cenário recebe uma nota de 0 a 100 que pondera três dimensões: <b>serviço</b> (entregar bem ao cliente), <b>rentabilidade</b> (EBITDA projetado) e <b>eficiência de capital</b> (penaliza custo de estoque adicional). O cenário com maior score é recomendado automaticamente.</p>
         <div class="formula">Score = w_s × Serviço_norm + w_e × EBITDA_norm + w_c × (1 − Custo_norm)
 Recomendado = argmax(Score)   ·   pesos somam 1,0</div>
         <div class="legend-row">
@@ -697,86 +833,156 @@ Recomendado = argmax(Score)   ·   pesos somam 1,0</div>
       </div>
 
       <div class="card method-item">
-        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg> Distribuição de Risco (Monte Carlo simplificado)</h4>
-        <p>Para a distribuição de risco de cobertura, geramos milhares de realizações determinísticas da demanda em torno da média, com a variabilidade observada. O histograma resultante mostra a probabilidade de a cobertura cair em cada faixa de dias — comunicando a incerteza, e não apenas um número único.</p>
-        <div class="formula">Demanda_i = média × (1 + variação · fator_normal_i)
-Cobertura_i = Estoque ÷ (Demanda_i ÷ 7)</div>
+        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg> Distribuição de Risco — Monte Carlo (50.000 cenários)</h4>
+        <p>A distribuição de risco de cobertura é gerada na <b>automação Python</b> com 50.000 amostras de Monte Carlo e entregue pronta no <code>data.json</code> (histograma, P(ruptura), p5/p50/p95 e zonas). O navegador apenas <b>renderiza</b> — não recalcula — garantindo consistência entre o cockpit, a torre e este laboratório.</p>
+        <div class="formula">Demanda_i ~ distribuição observada (σ, viés)   ·   i = 1…50.000
+Cobertura_i = Estoque ÷ (Demanda_i ÷ 7)
+P(ruptura) = #{ Cobertura_i < 7 } ÷ 50.000</div>
       </div>
     </div>
   </section>
 
   <footer>
-    <div>Painel S&amp;OE V3 — Laboratório de Cenários · Dados de demonstração (siderúrgica fictícia AçoNova) · Gerado para apresentação executiva.</div>
+    <div id="footSource">Painel S&amp;OE V3 — Laboratório de Cenários · carregando origem dos dados…</div>
     <div>Atualizado <span id="footTime">—</span></div>
   </footer>
 </div>
 
+<!-- TOAST + MODAL -->
+<div class="toast-wrap" id="toastWrap" aria-live="assertive"></div>
+<div class="modal-back" id="modalBack">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="mhead">
+      <h3 id="modalTitle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--violet-2)" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg> Mudanças vs. execução anterior</h3>
+      <button class="mclose" id="modalClose" aria-label="Fechar">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <script>
 /* =====================================================================
-   DADOS DE DEMONSTRAÇÃO — Siderúrgica AçoNova (15 SKUs)
+   FALLBACK DE DEMONSTRAÇÃO (enxuto) — usado quando ./data.json falha
+   (ex.: aberto via file://). Segue o CONTRATO data.json.
    ===================================================================== */
-const FAMILIES = ['Vergalhão CA-50','Fio-máquina','Perfil U','Chapa Grossa','Tubo sem costura','Arame recozido'];
+const DEMO_DATA = (()=>{
+  const fams=['Vergalhão CA-50','Fio-máquina','Perfil U','Chapa Grossa','Tubo sem costura','Arame recozido'];
+  const rawSkus=[
+    ['VG-50-08','Vergalhão CA-50','8,0 mm',420,48,97.2,96,540,3.0,4200],
+    ['VG-50-10','Vergalhão CA-50','10,0 mm',510,62,94.1,92,430,3.0,4150],
+    ['VG-50-12','Vergalhão CA-50','12,5 mm',380,40,98.4,98,610,2.5,4180],
+    ['FM-55-55','Fio-máquina','5,5 mm',300,55,88.0,85,160,4.0,4380],
+    ['FM-65-65','Fio-máquina','6,5 mm',270,38,95.5,94,380,3.5,4350],
+    ['PU-100','Perfil U','100 mm',140,22,96.8,95,300,2.0,5200],
+    ['PU-150','Perfil U','150 mm',120,30,91.2,88,120,3.0,5300],
+    ['CG-1900','Chapa Grossa','19,0 mm',230,34,93.6,91,410,4.5,5650],
+    ['CG-2540','Chapa Grossa','25,4 mm',180,50,85.5,82,95,5.0,5800],
+    ['CG-3175','Chapa Grossa','31,7 mm',110,18,97.9,97,520,4.0,5900],
+    ['TS-1143','Tubo sem costura','114,3 mm',90,20,92.0,89,210,6.0,7200],
+    ['TS-1683','Tubo sem costura','168,3 mm',75,28,86.4,83,80,6.5,7450],
+    ['AR-12','Arame recozido','1,24 mm',160,24,98.1,97,470,2.5,4900],
+    ['AR-16','Arame recozido','1,65 mm',200,42,90.5,87,175,3.0,4850],
+    ['AR-24','Arame recozido','2,40 mm',130,19,96.0,95,360,2.5,4780],
+  ];
+  const skus=rawSkus.map(r=>{
+    const [sku,familia,bitola,demanda,sigma,otif,ader,estoque,lt,preco]=r;
+    const cob=Math.round(estoque/(demanda/7));
+    const ss=Math.round(1.65*sigma*Math.sqrt(lt));
+    const status= (otif<90||cob<7)?'critico' : (otif<95||cob<15||cob>55||ader<90)?'atencao' : 'saudavel';
+    const spark=Array.from({length:6},(_,i)=>+(cob*(0.92+0.16*Math.sin(i+demanda))).toFixed(1));
+    return {sku,familia,bitola,demanda_sem_t:demanda,plano_t:Math.round(demanda*1.02),estoque_t:estoque,
+      producao_real_t:Math.round(demanda*0.98),otif_pct:otif,cobertura_dias:cob,status,
+      mape_pct:+(8+(100-ader)*0.5).toFixed(1),bias_pct:+((otif-94)*0.4).toFixed(1),
+      aderencia_pct:ader,lead_time_dias:lt*7,sigma_sem_t:sigma,safety_stock_t:ss,
+      preco_rs_t:preco,ebitda_rs_t:Math.round(preco*0.18),custo_estoque_rs_t:Math.round(preco*0.22*0.25),sparkline:spark};
+  });
+  const totDem=skus.reduce((a,s)=>a+s.demanda_sem_t,0);
+  const otif=skus.reduce((a,s)=>a+s.otif_pct*s.demanda_sem_t,0)/totDem;
+  const ader=skus.reduce((a,s)=>a+s.aderencia_pct*s.demanda_sem_t,0)/totDem;
+  const cob=skus.reduce((a,s)=>a+s.cobertura_dias,0)/skus.length;
+  const capital=skus.reduce((a,s)=>a+s.estoque_t*s.preco_rs_t,0);
+  // Monte Carlo demo: 50.000 amostras pré-computadas em bins
+  const binStart=4,binW=4,nb=14;
+  const bins=Array.from({length:nb},(_,i)=>binStart+i*binW);
+  const muCob=cob, sd=cob*0.22;
+  const hist=bins.map(b=>{const x=b+binW/2;return Math.exp(-0.5*Math.pow((x-muCob)/sd,2));});
+  const sh=hist.reduce((a,b)=>a+b,0);
+  const histN=hist.map(h=>Math.round(h/sh*50000));
+  return {
+    meta:{schema_version:1,generated_at_utc:new Date().toISOString(),
+      generated_at_brt:new Date().toLocaleString('pt-BR'),run_label:'demo',week:'S26/26',version:0,
+      source:'demo',monte_carlo_samples:50000,
+      validation:{status:'warn',checks_total:12,checks_passed:11,issues:[{nivel:'warn',campo:'origem',msg:'Modo demonstração: ./data.json não foi carregado (abra via servidor http/Pages para dados reais).'}]},
+      delta:{otif_pp:0,cobertura_dias:0,skus_alerta:0,resumo:'Sem execução anterior (modo demonstração).'}},
+    kpis:{otif_pct:+otif.toFixed(1),fill_rate_pct:+(otif+0.7).toFixed(1),aderencia_plano_pct:+ader.toFixed(1),
+      cobertura_media_dias:+cob.toFixed(1),skus_alerta:skus.filter(s=>s.status!=='saudavel').length,
+      gap_demanda_suprimento_kt:1.9,ebitda_projetado_mi:41.0,capital_imobilizado_mi:+(capital/1e6).toFixed(1),
+      mape_pct:8.3,bias_pct:-1.2,utilizacao_capacidade_pct:87,health_score:80,health_status:'verde',
+      deltas:{otif_pct:0,cobertura_media_dias:0,aderencia_plano_pct:0,ebitda_projetado_mi:0}},
+    radar:{servico:88,estoque:75,capacidade:82,acuracidade:79,caixa:70},
+    skus,
+    balanco_semanas:Array.from({length:13},(_,i)=>({semana:'S'+(26+i),
+      demanda_kt:+(2.9+0.22*Math.sin(i/2.3)).toFixed(2),suprimento_kt:+(3.05+0.09*Math.cos(i/1.8)).toFixed(2),
+      cobertura_dias:Math.round(cob+3*Math.sin(i/2))})),
+    capacidade_linhas:[
+      {linha:'Aciaria',capacidade_t:4200,utilizado_t:3696,util_pct:88},
+      {linha:'Laminação Quente',capacidade_t:3800,utilizado_t:3648,util_pct:96},
+      {linha:'Trefilaria',capacidade_t:2600,utilizado_t:1924,util_pct:74},
+      {linha:'Acabamento',capacidade_t:3100,utilizado_t:2542,util_pct:82},
+    ],
+    exececoes:skus.filter(s=>s.status!=='saudavel').slice(0,6).map(s=>({sku:s.sku,familia:s.familia,
+      tipo:s.cobertura_dias<7?'ruptura':s.cobertura_dias>55?'excesso':'atraso',
+      severidade:s.status==='critico'?'alta':'media',impacto_rs:s.estoque_t*s.preco_rs_t*0.1,
+      impacto_t:Math.round(s.demanda_sem_t*0.2),cobertura_dias:s.cobertura_dias,
+      acao:s.cobertura_dias<7?'Antecipar reposição e priorizar carteira.':'Revisar aporte e sequenciamento.'})),
+    acuracidade_familias:fams.map(f=>{const arr=skus.filter(s=>s.familia===f);
+      const m=arr.reduce((a,s)=>a+s.mape_pct,0)/arr.length;const b=arr.reduce((a,s)=>a+s.bias_pct,0)/arr.length;
+      const pl=arr.reduce((a,s)=>a+s.plano_t,0);const re=arr.reduce((a,s)=>a+s.producao_real_t,0);
+      return {familia:f,mape_pct:+m.toFixed(1),bias_pct:+b.toFixed(1),planejado_t:pl,realizado_t:re};}),
+    cenarios:[
+      {nome:'Serviço 99%',ns_pct:99,z:2.33,producao_t:16800,estoque_final_t:9200,cobertura_dias:34,ebitda_rs_t:760,ebitda_proj_mi:39.2,custo_adicional_mi:3.1,caixa_imob_mi:41,score:78,recomendado:false,motivo:'Máximo serviço, porém maior capital.'},
+      {nome:'Rentabilidade',ns_pct:93,z:1.50,producao_t:15600,estoque_final_t:6100,cobertura_dias:21,ebitda_rs_t:880,ebitda_proj_mi:43.6,custo_adicional_mi:1.2,caixa_imob_mi:28,score:81,recomendado:false,motivo:'Maior EBITDA, serviço menor.'},
+      {nome:'Equilíbrio',ns_pct:96,z:1.75,producao_t:16100,estoque_final_t:7400,cobertura_dias:27,ebitda_rs_t:830,ebitda_proj_mi:42.0,custo_adicional_mi:1.9,caixa_imob_mi:33,score:86,recomendado:true,motivo:'Melhor equilíbrio serviço × custo × EBITDA.'},
+    ].sort((a,b)=>b.score-a.score),
+    monte_carlo:{samples:50000,seed:42,p_ruptura:0.07,p5_cobertura:+(muCob-1.64*sd).toFixed(1),
+      p50_cobertura:+muCob.toFixed(1),p95_cobertura:+(muCob+1.64*sd).toFixed(1),bins,hist:histN,
+      zonas:{ruptura:0.07,alvo:0.74,excesso:0.19}},
+    fluxo:{demanda_t:18400,producao_t:16100,estoque_t:7400,atendimento_t:17600,perda_t:800},
+    cadencia:[]
+  };
+})();
 
-const SKUS = [
-  {sku:'VG-50-08', fam:'Vergalhão CA-50', bitola:'8,0 mm',  demanda:420, sigma:48, otif:97.2, fill:98.6, ader:96, estoque:540, lt:3.0, preco:4200},
-  {sku:'VG-50-10', fam:'Vergalhão CA-50', bitola:'10,0 mm', demanda:510, sigma:62, otif:94.1, fill:96.0, ader:92, estoque:430, lt:3.0, preco:4150},
-  {sku:'VG-50-12', fam:'Vergalhão CA-50', bitola:'12,5 mm', demanda:380, sigma:40, otif:98.4, fill:99.1, ader:98, estoque:610, lt:2.5, preco:4180},
-  {sku:'FM-55-55', fam:'Fio-máquina',     bitola:'5,5 mm',  demanda:300, sigma:55, otif:88.0, fill:90.5, ader:85, estoque:160, lt:4.0, preco:4380},
-  {sku:'FM-65-65', fam:'Fio-máquina',     bitola:'6,5 mm',  demanda:270, sigma:38, otif:95.5, fill:97.2, ader:94, estoque:380, lt:3.5, preco:4350},
-  {sku:'PU-100',   fam:'Perfil U',        bitola:'100 mm',  demanda:140, sigma:22, otif:96.8, fill:98.0, ader:95, estoque:300, lt:2.0, preco:5200},
-  {sku:'PU-150',   fam:'Perfil U',        bitola:'150 mm',  demanda:120, sigma:30, otif:91.2, fill:93.4, ader:88, estoque:120, lt:3.0, preco:5300},
-  {sku:'CG-1900',  fam:'Chapa Grossa',    bitola:'19,0 mm', demanda:230, sigma:34, otif:93.6, fill:95.5, ader:91, estoque:410, lt:4.5, preco:5650},
-  {sku:'CG-2540',  fam:'Chapa Grossa',    bitola:'25,4 mm', demanda:180, sigma:50, otif:85.5, fill:88.2, ader:82, estoque:95,  lt:5.0, preco:5800},
-  {sku:'CG-3175',  fam:'Chapa Grossa',    bitola:'31,7 mm', demanda:110, sigma:18, otif:97.9, fill:99.0, ader:97, estoque:520, lt:4.0, preco:5900},
-  {sku:'TS-1143',  fam:'Tubo sem costura',bitola:'114,3 mm',demanda:90,  sigma:20, otif:92.0, fill:94.1, ader:89, estoque:210, lt:6.0, preco:7200},
-  {sku:'TS-1683',  fam:'Tubo sem costura',bitola:'168,3 mm',demanda:75,  sigma:28, otif:86.4, fill:89.0, ader:83, estoque:80,  lt:6.5, preco:7450},
-  {sku:'AR-12',    fam:'Arame recozido',  bitola:'1,24 mm', demanda:160, sigma:24, otif:98.1, fill:99.2, ader:97, estoque:470, lt:2.5, preco:4900},
-  {sku:'AR-16',    fam:'Arame recozido',  bitola:'1,65 mm', demanda:200, sigma:42, otif:90.5, fill:92.8, ader:87, estoque:175, lt:3.0, preco:4850},
-  {sku:'AR-24',    fam:'Arame recozido',  bitola:'2,40 mm', demanda:130, sigma:19, otif:96.0, fill:97.8, ader:95, estoque:360, lt:2.5, preco:4780},
-];
+/* =====================================================================
+   FORMATADORES pt-BR
+   ===================================================================== */
+const fmt = (n,d=0)=>(n==null||isNaN(n))?'—':Number(n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtBRL=(n)=>{
+  if(n==null||isNaN(n)) return '—';
+  return 'R$ '+ (n>=1e6? (n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi'
+       : n>=1e3? (n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:0})+' mil'
+       : n.toLocaleString('pt-BR'));
+};
+const fmtMi=(n)=>'R$ '+fmt(n,1)+' mi';
+const fmtPP=(n)=>(n>0?'+':'')+fmt(n,1)+' p.p.';
 
-// Fator Z por nível de serviço
-function zFactor(svc){
-  if(svc>=99) return 2.33;
-  if(svc>=97) return 1.88;
-  if(svc>=95) return 1.65;
-  if(svc>=93) return 1.50; // interpolado
-  return 1.28; // 90%
-}
-function zInterp(svc){
-  // interpolação suave para sliders intermediários
-  const pts=[[90,1.28],[95,1.65],[97,1.88],[99,2.33]];
-  if(svc<=90) return 1.28;
-  if(svc>=99) return 2.33;
-  for(let i=0;i<pts.length-1;i++){
-    const [x0,y0]=pts[i],[x1,y1]=pts[i+1];
-    if(svc>=x0&&svc<=x1){ return y0+(y1-y0)*((svc-x0)/(x1-x0)); }
-  }
-  return 1.65;
-}
+/* =====================================================================
+   ESTADO GLOBAL
+   ===================================================================== */
+let DATA = null;            // dataset ativo (real ou demo)
+let isDemo = true;
+let lastVersion = null;     // meta.version visto por último
+const charts = {};
+const lazyInit = {acuracidade:false,simulador:false,tradeoff:false};
 
-// Métricas derivadas por SKU
-SKUS.forEach(s=>{
-  s.ss = Math.round(zFactor(95)*s.sigma*Math.sqrt(s.lt)); // est. segurança base 95%
-  s.cobertura = Math.round(s.estoque/(s.demanda/7)); // dias
-  s.valor = s.estoque*s.preco; // R$ imobilizado
-  // status
-  let rank=0,status='ok';
-  if(s.otif<90||s.cobertura<12){rank=2;status='crit';}
-  else if(s.otif<95||s.cobertura<20||s.cobertura>55||s.ader<90){rank=1;status='warn';}
-  s.statusRank=rank; s.status=status;
-});
-
-const fmt = (n,d=0)=>n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
-const fmtBRL=(n)=>'R$ '+ (n>=1e6? (n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+' mi'
-                       : n>=1e3? (n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:0})+' mil'
-                       : n.toLocaleString('pt-BR'));
-
-/* ---------- Chart.js defaults (tema dark) ---------- */
+/* =====================================================================
+   Chart.js defaults (tema dark neon)
+   ===================================================================== */
 Chart.defaults.color = '#9fb0d4';
 Chart.defaults.font.family = "'Inter',system-ui,sans-serif";
 Chart.defaults.font.size = 11;
 Chart.defaults.borderColor = 'rgba(34,48,79,.55)';
+Chart.defaults.animation.duration = 700;
+Chart.defaults.animation.easing = 'easeOutQuart';
 const GRID = 'rgba(34,48,79,.5)';
 const TT = {
   backgroundColor:'#05080f', borderColor:'#22304f', borderWidth:1,
@@ -788,26 +994,173 @@ function grad(ctx,c1,c2){
   g.addColorStop(0,c1); g.addColorStop(1,c2); return g;
 }
 
-const charts={};
-const WEEKS = Array.from({length:14},(_,i)=>'W'+i);
-
 /* =====================================================================
    RELÓGIO
    ===================================================================== */
 function tick(){
   const d=new Date();
-  const t=d.toLocaleTimeString('pt-BR');
-  const ds=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('clock').textContent=t;
-  document.getElementById('cdate').textContent=ds;
-  document.getElementById('footTime').textContent=d.toLocaleString('pt-BR');
+  document.getElementById('clock').textContent=d.toLocaleTimeString('pt-BR');
+  document.getElementById('cdate').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 }
 setInterval(tick,1000); tick();
 
 /* =====================================================================
+   FETCH + POLLING (binding ao data.json)
+   ===================================================================== */
+async function fetchData(){
+  try{
+    const res = await fetch('./data.json?v='+Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    if(!json || !json.meta || !json.kpis) throw new Error('Estrutura inválida');
+    return {data:json, demo:false};
+  }catch(e){
+    return {data:DEMO_DATA, demo:true};
+  }
+}
+
+function setLiveState(demo){
+  const pulse=document.getElementById('livePulse');
+  const lbl=document.getElementById('liveLabel');
+  if(demo){
+    pulse.classList.add('demo');
+    lbl.textContent='Modo demonstração';
+    pulse.setAttribute('data-tip','./data.json não carregou — exibindo dados de demonstração. Abra via servidor http/GitHub Pages para dados reais.');
+  }else{
+    pulse.classList.remove('demo');
+    lbl.textContent='Dados ao vivo';
+    pulse.setAttribute('data-tip','Conectado ao data.json gerado pela automação.');
+  }
+}
+
+function updateStatusBar(){
+  const m=DATA.meta||{};
+  document.getElementById('chipTime').textContent=m.generated_at_brt||'—';
+  document.getElementById('chipRun').textContent=m.run_label?('('+m.run_label+')'):'';
+  document.getElementById('chipWeek').textContent=m.week||'—';
+  document.getElementById('chipVer').textContent=(m.version!=null?m.version:'—');
+  document.getElementById('footTime').textContent=(m.generated_at_brt||new Date().toLocaleString('pt-BR'))+(isDemo?' · demo':'');
+  document.getElementById('footSource').innerHTML='Painel S&amp;OE V3 — Laboratório de Cenários · origem: <b>'+(m.source||'—')+'</b> · '+(isDemo?'<span style="color:var(--amber)">dados de demonstração</span>':'<span style="color:var(--green)">dados reais (data.json)</span>')+' · Monte Carlo 50.000 cenários.';
+  // badge de validação
+  const v=(m.validation&&m.validation.status)||'ok';
+  const badge=document.getElementById('valBadge');
+  badge.className='vbadge '+(v==='error'?'error':v==='warn'?'warn':'ok');
+  const map={ok:'validado',warn:'avisos',error:'erros'};
+  const n=(m.validation&&m.validation.issues)?m.validation.issues.length:0;
+  document.getElementById('valText').textContent=map[v]+(n?(' · '+n):'')+(m.validation&&m.validation.checks_total?(' ('+m.validation.checks_passed+'/'+m.validation.checks_total+')'):'');
+  // delta chip
+  const dc=document.getElementById('deltaChip');
+  if(m.delta){
+    dc.style.display='';
+    const dpp=m.delta.otif_pp;
+    document.getElementById('deltaText').textContent=(dpp!=null?('OTIF '+(dpp>0?'+':'')+fmt(dpp,1)+' p.p.'):'ver mudanças');
+  }else dc.style.display='none';
+}
+
+function renderAll(){
+  buildKPIs();
+  buildAnalyticCharts();
+  buildAlerts();
+  initTableData();
+  // re-render abas já inicializadas
+  if(lazyInit.acuracidade) initAccuracy(true);
+  if(lazyInit.simulador) initSimulator(true);
+  if(lazyInit.tradeoff) initTradeoff(true);
+  updateStatusBar();
+  setLiveState(isDemo);
+}
+
+async function applyData(showToastIfChanged){
+  const {data,demo}=await fetchData();
+  const newVersion = data.meta? data.meta.version : null;
+  const changed = (lastVersion!==null) && (newVersion!==lastVersion);
+  DATA=data; isDemo=demo;
+  renderAll();
+  if(showToastIfChanged && changed && !demo){
+    showUpdateToast();
+  }
+  lastVersion=newVersion;
+}
+
+function pollLoop(){
+  setInterval(async()=>{
+    const {data,demo}=await fetchData();
+    const nv=data.meta?data.meta.version:null;
+    if(!demo && nv!==null && nv!==lastVersion){
+      DATA=data; isDemo=false;
+      renderAll();
+      showUpdateToast();
+      lastVersion=nv;
+    }else if(demo!==isDemo){
+      // mudou de demo->real ou vice-versa
+      DATA=data; isDemo=demo; renderAll(); lastVersion=nv;
+    }
+  }, 90000); // 90s
+}
+
+/* =====================================================================
+   TOAST + MODAL
+   ===================================================================== */
+function showUpdateToast(){
+  const m=DATA.meta||{};
+  const wrap=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML=`
+    <div class="th">
+      <span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><path d="M21 3v6h-6"/></svg></span>
+      Dados atualizados
+      <button class="tx" aria-label="Fechar">×</button>
+    </div>
+    <div class="tb">Nova execução às <b>${m.generated_at_brt||'—'}</b> ${m.run_label?('('+m.run_label+')'):''} — confira o double-check.</div>
+    <div class="ta">
+      <button class="ap">Atualizar agora</button>
+      <button class="as">Ver mudanças</button>
+    </div>`;
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  const close=()=>{t.classList.remove('show');setTimeout(()=>t.remove(),450);};
+  t.querySelector('.tx').addEventListener('click',close);
+  t.querySelector('.ap').addEventListener('click',()=>{renderAll();close();});
+  t.querySelector('.as').addEventListener('click',()=>{openDeltaModal();close();});
+  setTimeout(close,12000);
+}
+
+function openDeltaModal(){
+  const m=DATA.meta||{};
+  const d=m.delta||{};
+  const val=m.validation||{};
+  const body=document.getElementById('modalBody');
+  const cell=(l,v,col)=>`<div class="delta-cell"><div class="dl">${l}</div><div class="dv" style="color:${col}">${v}</div></div>`;
+  const sign=(n)=>n>0?'var(--green)':n<0?'var(--red)':'var(--txt-2)';
+  let html=`<div class="delta-grid">
+    ${cell('OTIF',(d.otif_pp!=null?fmtPP(d.otif_pp):'—'),sign(d.otif_pp||0))}
+    ${cell('Cobertura',(d.cobertura_dias!=null?((d.cobertura_dias>0?'+':'')+fmt(d.cobertura_dias,1)+'d'):'—'),sign(d.cobertura_dias||0))}
+    ${cell('SKUs em alerta',(d.skus_alerta!=null?((d.skus_alerta>0?'+':'')+d.skus_alerta):'—'),sign(-(d.skus_alerta||0)))}
+    ${cell('Versão',(m.version!=null?('v'+m.version):'—'),'var(--violet-2)')}
+  </div>`;
+  if(d.resumo) html+=`<p style="font-size:.84rem;color:var(--txt-2);margin-bottom:14px">${d.resumo}</p>`;
+  if(val.issues&&val.issues.length){
+    html+=`<h3 style="font-size:.86rem;margin:6px 0 10px">Validação (${val.checks_passed||0}/${val.checks_total||0})</h3>`;
+    html+=val.issues.map(it=>`<div class="issue ${it.nivel==='error'?'error':'warn'}">
+      <span class="il">${it.nivel}</span>
+      <span class="it"><b>${it.campo||''}</b> ${it.msg||''}</span></div>`).join('');
+  }else{
+    html+=`<div class="issue warn" style="border-left-color:var(--green)"><span class="il" style="background:rgba(52,211,153,.16);color:var(--green)">ok</span><span class="it">Nenhum aviso de validação.</span></div>`;
+  }
+  body.innerHTML=html;
+  document.getElementById('modalBack').classList.add('show');
+}
+function closeModal(){document.getElementById('modalBack').classList.remove('show');}
+document.getElementById('modalClose').addEventListener('click',closeModal);
+document.getElementById('modalBack').addEventListener('click',e=>{if(e.target.id==='modalBack')closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.getElementById('deltaChip').addEventListener('click',openDeltaModal);
+document.getElementById('valBadge').addEventListener('click',openDeltaModal);
+
+/* =====================================================================
    TABS
    ===================================================================== */
-const lazyInit={acuracidade:false,simulador:false,tradeoff:false};
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false');});
@@ -815,39 +1168,56 @@ document.querySelectorAll('.tab').forEach(tab=>{
     tab.classList.add('active'); tab.setAttribute('aria-selected','true');
     const v=tab.dataset.view;
     document.getElementById('view-'+v).classList.add('active');
-    // inicializa charts da aba sob demanda
     if(v==='acuracidade'&&!lazyInit.acuracidade){initAccuracy();lazyInit.acuracidade=true;}
     if(v==='simulador'&&!lazyInit.simulador){initSimulator();lazyInit.simulador=true;}
     if(v==='tradeoff'&&!lazyInit.tradeoff){initTradeoff();lazyInit.tradeoff=true;}
-    // resize para charts que estavam ocultos
     setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize();}catch(e){}});},60);
   });
 });
+window.addEventListener('resize',()=>{
+  clearTimeout(window._rz);
+  window._rz=setTimeout(()=>{Object.values(charts).forEach(c=>{try{c.resize();}catch(e){}});},150);
+});
 
 /* =====================================================================
-   VIEW ANALÍTICA
+   helpers de status / cores
+   ===================================================================== */
+const STATUS_RANK={critico:2,atencao:1,saudavel:0};
+function statusPill(s){
+  const m={critico:['b-red','Crítico'],atencao:['b-amber','Atenção'],saudavel:['b-green','Saudável']};
+  const e=m[s]||m.saudavel;
+  return `<span class="badge ${e[0]}">${e[1]}</span>`;
+}
+function miniBar(v,max,col){return `<span class="mini-bar"><i style="width:${Math.min(v/max*100,100)}%;background:${col}"></i></span>`;}
+function sparkline(arr,col){
+  if(!arr||!arr.length) return '';
+  const w=64,h=18,mn=Math.min(...arr),mx=Math.max(...arr),rng=(mx-mn)||1;
+  const pts=arr.map((v,i)=>`${(i/(arr.length-1)*w).toFixed(1)},${(h-((v-mn)/rng)*h).toFixed(1)}`).join(' ');
+  const up=arr[arr.length-1]>=arr[0];
+  const c=col||(up?'var(--green)':'var(--red)');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none"><polyline points="${pts}" stroke="${c}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+/* =====================================================================
+   VIEW ANALÍTICA — KPIs a partir de DATA.kpis
    ===================================================================== */
 function buildKPIs(){
-  const totDem = SKUS.reduce((a,s)=>a+s.demanda,0);
-  const otif = SKUS.reduce((a,s)=>a+s.otif*s.demanda,0)/totDem;
-  const fill = SKUS.reduce((a,s)=>a+s.fill*s.demanda,0)/totDem;
-  const ader = SKUS.reduce((a,s)=>a+s.ader*s.demanda,0)/totDem;
-  const cob  = SKUS.reduce((a,s)=>a+s.cobertura,0)/SKUS.length;
-  const capital = SKUS.reduce((a,s)=>a+s.valor,0);
-  const exc = SKUS.filter(s=>s.status!=='ok').length;
-
+  const k=DATA.kpis||{};
+  const dl=k.deltas||{};
+  const arrow=(v)=>v>0?'up':v<0?'down':'flat';
+  const dtxt=(v,suf='p.p.')=> v==null?'—':((v>0?'+':'')+fmt(v,1)+' '+suf+' vs. S-1');
   const kpis=[
-    {l:'OTIF Consolidado',v:fmt(otif,1)+'<small>%</small>',d:'+1,4 p.p. vs. S-1',cls:'up',bar:otif,max:100,col:'var(--green)',glow:'rgba(52,211,153,.18)',
+    {l:'OTIF Consolidado',v:fmt(k.otif_pct,1)+'<small>%</small>',d:dtxt(dl.otif_pct),cls:arrow(dl.otif_pct||0),bar:k.otif_pct,max:100,col:'var(--green)',glow:'rgba(52,211,153,.18)',
       icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',tip:'Pedidos entregues no prazo e completos.'},
-    {l:'Fill Rate',v:fmt(fill,1)+'<small>%</small>',d:'+0,8 p.p. vs. S-1',cls:'up',bar:fill,max:100,col:'var(--cyan)',glow:'rgba(34,211,238,.18)',
+    {l:'Fill Rate',v:fmt(k.fill_rate_pct,1)+'<small>%</small>',d:'% da qtd. pedida atendida',cls:'flat',bar:k.fill_rate_pct,max:100,col:'var(--cyan)',glow:'rgba(34,211,238,.18)',
       icon:'<path d="M20 7l-8 4-8-4M20 7v10l-8 4M4 7v10l8 4M12 11v10"/>',tip:'% da quantidade pedida efetivamente atendida.'},
-    {l:'Aderência ao Plano',v:fmt(ader,1)+'<small>%</small>',d:'−1,2 p.p. vs. S-1',cls:'down',bar:ader,max:100,col:'var(--violet-2)',glow:'rgba(139,92,246,.2)',
+    {l:'Aderência ao Plano',v:fmt(k.aderencia_plano_pct,1)+'<small>%</small>',d:dtxt(dl.aderencia_plano_pct),cls:arrow(dl.aderencia_plano_pct||0),bar:k.aderencia_plano_pct,max:100,col:'var(--violet-2)',glow:'rgba(139,92,246,.2)',
       icon:'<path d="M9 11l3 3L22 4"/><path d="M12 3v9"/>',tip:'Realizado vs. planejado (demanda e produção).'},
-    {l:'Cobertura Média',v:fmt(cob,0)+'<small> dias</small>',d:'Zona-alvo 20–45d',cls:'flat',bar:Math.min(cob,60),max:60,col:'var(--blue)',glow:'rgba(59,130,246,.18)',
+    {l:'Cobertura Média',v:fmt(k.cobertura_media_dias,0)+'<small> dias</small>',d:dtxt(dl.cobertura_media_dias,'dias'),cls:arrow(dl.cobertura_media_dias||0),bar:Math.min(k.cobertura_media_dias,60),max:60,col:'var(--blue)',glow:'rgba(59,130,246,.18)',
       icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',tip:'Dias de demanda cobertos pelo estoque atual.'},
-    {l:'Caixa Imobilizado',v:fmtBRL(capital),d:'Estoque a preço médio',cls:'flat',bar:72,max:100,col:'var(--amber)',glow:'rgba(251,191,36,.16)',
-      icon:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',tip:'Capital de giro parado em estoque.'},
-    {l:'Exceções Ativas',v:exc+'<small> SKUs</small>',d:exc+' itens fora da meta',cls:exc>3?'down':'flat',bar:exc/SKUS.length*100,max:100,col:'var(--red)',glow:'rgba(248,113,113,.16)',
+    {l:'EBITDA Projetado',v:fmtMi(k.ebitda_projetado_mi),d:dtxt(dl.ebitda_projetado_mi,'mi'),cls:arrow(dl.ebitda_projetado_mi||0),bar:Math.min(k.ebitda_projetado_mi,60),max:60,col:'var(--green-2)',glow:'rgba(16,185,129,.16)',
+      icon:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',tip:'EBITDA estimado para o horizonte.'},
+    {l:'Exceções Ativas',v:(k.skus_alerta||0)+'<small> SKUs</small>',d:(k.skus_alerta||0)+' itens fora da meta',cls:(k.skus_alerta>3?'down':'flat'),bar:(k.skus_alerta||0),max:(DATA.skus?DATA.skus.length:15),col:'var(--red)',glow:'rgba(248,113,113,.16)',
       icon:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',tip:'SKUs em status crítico ou de atenção.'},
   ];
   document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
@@ -855,163 +1225,162 @@ function buildKPIs(){
       <div class="kicon" style="background:${k.glow}">
         <svg viewBox="0 0 24 24" fill="none" stroke="${k.col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${k.icon}</svg>
       </div>
-      <div class="klabel" data-tip="${k.tip}">${k.l}</div>
+      <div class="klabel" data-tip="${k.tip}" tabindex="0">${k.l}</div>
       <div class="kval">${k.v}</div>
       <div class="kdelta ${k.cls}">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${k.cls==='up'?'<path d="M7 17L17 7M17 7H8M17 7v9"/>':k.cls==='down'?'<path d="M7 7l10 10M17 17H8M17 17V8"/>':'<path d="M5 12h14"/>'}</svg>${k.d}
       </div>
       <div class="kbar"><i style="width:0%;background:${k.col}" data-w="${Math.min(k.bar/k.max*100,100)}"></i></div>
     </div>`).join('');
-  // anima barras
   requestAnimationFrame(()=>setTimeout(()=>{
     document.querySelectorAll('#kpiRow .kbar i').forEach(b=>b.style.width=b.dataset.w+'%');
   },120));
 }
 
 function buildAnalyticCharts(){
-  // Demanda x Suprimento
-  const dem = WEEKS.map((_,i)=> 2900 + Math.round(220*Math.sin(i/2.3)) + (i>7?120:0) - i*8);
-  const sup = WEEKS.map((_,i)=> 3050 - (i>=5&&i<=8? 260:0) + Math.round(90*Math.cos(i/1.8)));
-  const gap = dem.map((d,i)=> sup[i]-d);
-  const ctxS=document.getElementById('chSupply');
-  charts.supply=new Chart(ctxS,{
-    data:{labels:WEEKS,datasets:[
-      {type:'line',label:'Demanda (t)',data:dem,borderColor:'#a78bfa',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(139,92,246,.28)','rgba(139,92,246,0)'),fill:true,tension:.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointBackgroundColor:'#a78bfa',order:2},
-      {type:'line',label:'Suprimento (t)',data:sup,borderColor:'#22d3ee',backgroundColor:'transparent',borderDash:[6,4],fill:false,tension:.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,order:1},
-      {type:'bar',label:'Gap (t)',data:gap,backgroundColor:gap.map(g=>g>=0?'rgba(52,211,153,.55)':'rgba(248,113,113,.65)'),borderRadius:4,barThickness:10,order:3}
+  const bw=DATA.balanco_semanas||[];
+  document.getElementById('balWeeksBadge').textContent=bw.length+' semanas';
+  const labels=bw.map(w=>w.semana);
+  const dem=bw.map(w=>w.demanda_kt);
+  const sup=bw.map(w=>w.suprimento_kt);
+  const gap=bw.map(w=>+(w.suprimento_kt-w.demanda_kt).toFixed(2));
+
+  if(charts.supply) charts.supply.destroy();
+  charts.supply=new Chart(document.getElementById('chSupply'),{
+    data:{labels,datasets:[
+      {type:'line',label:'Demanda (kt)',data:dem,borderColor:'#a78bfa',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(139,92,246,.28)','rgba(139,92,246,0)'),fill:true,tension:.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointBackgroundColor:'#a78bfa',order:2},
+      {type:'line',label:'Suprimento (kt)',data:sup,borderColor:'#22d3ee',backgroundColor:'transparent',borderDash:[6,4],fill:false,tension:.4,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,order:1},
+      {type:'bar',label:'Gap (kt)',data:gap,backgroundColor:gap.map(g=>g>=0?'rgba(52,211,153,.55)':'rgba(248,113,113,.65)'),borderRadius:4,barThickness:10,order:3}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle',padding:14,font:{size:11}}},tooltip:TT},
-      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'t / semana'}}}}
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'kt / semana'}}}}
   });
 
-  // Cobertura por família (horizontal bar)
-  const famCob={};
-  FAMILIES.forEach(f=>{const arr=SKUS.filter(s=>s.fam===f);famCob[f]=Math.round(arr.reduce((a,s)=>a+s.cobertura,0)/arr.length);});
-  const ctxC=document.getElementById('chCover');
-  charts.cover=new Chart(ctxC,{type:'bar',
-    data:{labels:Object.keys(famCob),datasets:[{label:'Cobertura (dias)',data:Object.values(famCob),
-      backgroundColor:Object.values(famCob).map(v=> v<18?'rgba(248,113,113,.8)': v>50?'rgba(251,191,36,.8)':'rgba(52,211,153,.8)'),
+  // Cobertura por família (média das coberturas dos SKUs)
+  const skus=DATA.skus||[];
+  const fams=[...new Set(skus.map(s=>s.familia))];
+  const famCob=fams.map(f=>{const arr=skus.filter(s=>s.familia===f);return Math.round(arr.reduce((a,s)=>a+s.cobertura_dias,0)/arr.length);});
+  if(charts.cover) charts.cover.destroy();
+  charts.cover=new Chart(document.getElementById('chCover'),{type:'bar',
+    data:{labels:fams,datasets:[{label:'Cobertura (dias)',data:famCob,
+      backgroundColor:famCob.map(v=> v<15?'rgba(248,113,113,.8)': v>50?'rgba(251,191,36,.8)':'rgba(52,211,153,.8)'),
       borderRadius:6,barThickness:18}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>c.parsed.x+' dias'+(c.parsed.x<18?' · risco ruptura':c.parsed.x>50?' · excesso':' · saudável')}},
-        annotation:false},
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>c.parsed.x+' dias'+(c.parsed.x<15?' · risco ruptura':c.parsed.x>50?' · excesso':' · saudável')}}},
       scales:{x:{grid:{color:GRID},title:{display:true,text:'dias'}},y:{grid:{display:false}}}}
   });
 
   // Capacidade / utilização
-  const lines=['Aciaria','Laminação','Trefilaria','Acabamento'];
-  const util=[88,96,74,82];
-  const ctxCap=document.getElementById('chCap');
-  charts.cap=new Chart(ctxCap,{type:'bar',
-    data:{labels:lines,datasets:[
-      {label:'Utilização (%)',data:util,backgroundColor:util.map(u=>u>=95?'rgba(248,113,113,.8)':u>=85?'rgba(251,191,36,.8)':'rgba(52,211,153,.8)'),borderRadius:7,barThickness:38},
+  const cap=DATA.capacidade_linhas||[];
+  if(charts.cap) charts.cap.destroy();
+  charts.cap=new Chart(document.getElementById('chCap'),{type:'bar',
+    data:{labels:cap.map(l=>l.linha),datasets:[
+      {label:'Utilização (%)',data:cap.map(l=>l.util_pct),backgroundColor:cap.map(l=>l.util_pct>=95?'rgba(248,113,113,.8)':l.util_pct>=85?'rgba(251,191,36,.8)':'rgba(52,211,153,.8)'),borderRadius:7,barThickness:38},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>'Utilização: '+c.parsed.y+'% '+(c.parsed.y>=95?'(gargalo)':c.parsed.y<80?'(folga)':'(ok)')}}},
-      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},max:110,title:{display:true,text:'% capacidade'},
-        ticks:{callback:v=>v+'%'}}}}
+      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},max:110,title:{display:true,text:'% capacidade'},ticks:{callback:v=>v+'%'}}}}
   });
 }
 
-// Alertas / exceções
+/* Alertas a partir de DATA.exececoes */
 function buildAlerts(){
-  const alerts=[];
-  SKUS.forEach(s=>{
-    if(s.cobertura<12) alerts.push({sev:'crit',t:`Risco de ruptura — ${s.sku}`,d:`Cobertura de ${s.cobertura} dias (abaixo do mínimo). Demanda ${fmt(s.demanda)} t/sem · LT ${s.lt.toString().replace('.',',')} sem.`});
-    else if(s.otif<88) alerts.push({sev:'crit',t:`OTIF crítico — ${s.sku}`,d:`Nível de serviço em ${fmt(s.otif,1)}%. Revisar sequenciamento e priorização de carteira.`});
-    else if(s.cobertura>55) alerts.push({sev:'warn',t:`Excesso de estoque — ${s.sku}`,d:`Cobertura de ${s.cobertura} dias · ${fmtBRL(s.valor)} imobilizados. Avaliar redução de aporte.`});
-    else if(s.ader<88) alerts.push({sev:'warn',t:`Aderência baixa — ${s.sku}`,d:`Realizado ${fmt(s.ader,0)}% do plano. Investigar desvio de demanda/produção.`});
+  const exc=DATA.exececoes||[];
+  const sevMap={alta:'crit',media:'warn',baixa:'info'};
+  const list=exc.map(e=>{
+    const sev=sevMap[e.severidade]||'warn';
+    const tipo={ruptura:'Risco de ruptura',excesso:'Excesso de estoque',capacidade:'Estouro de capacidade',atraso:'Atraso de suprimento'}[e.tipo]||'Exceção';
+    const det=[];
+    if(e.cobertura_dias!=null) det.push('Cobertura '+e.cobertura_dias+'d');
+    if(e.impacto_t) det.push('Impacto '+fmt(e.impacto_t)+' t');
+    if(e.impacto_rs) det.push(fmtBRL(e.impacto_rs));
+    return {sev,t:`${tipo} — ${e.sku||e.familia||''}`,d:(e.acao||'')+(det.length?(' · '+det.join(' · ')):'')};
   });
-  alerts.push({sev:'warn',t:'Estouro de capacidade — Laminação',d:'Linha em 96% de utilização nas W5–W8. Risco de atraso no atendimento de vergalhão.'});
-  alerts.push({sev:'info',t:'Atraso de suprimento — Tubos sem costura',d:'Lead time de matéria-prima elevado (6,5 sem). Antecipar ordens de reposição.'});
-  // ordena por severidade
   const rank={crit:0,warn:1,info:2};
-  alerts.sort((a,b)=>rank[a.sev]-rank[b.sev]);
-  const top=alerts.slice(0,7);
-  const crit=alerts.filter(a=>a.sev==='crit').length;
-  document.getElementById('alertCount').textContent=`${crit} críticos · ${alerts.length} total`;
+  list.sort((a,b)=>rank[a.sev]-rank[b.sev]);
+  const top=list.slice(0,7);
+  const crit=list.filter(a=>a.sev==='crit').length;
+  document.getElementById('alertCount').textContent=`${crit} críticos · ${list.length} total`;
   const icons={crit:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',
     warn:'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
     info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'};
-  document.getElementById('alertList').innerHTML=top.map(a=>`
+  const html=top.map(a=>`
     <div class="alert ${a.sev}">
       <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[a.sev]}</svg></div>
       <div><div class="at">${a.t}</div><div class="ad">${a.d}</div></div>
     </div>`).join('');
+  document.getElementById('alertList').innerHTML=html||'<div class="alert info"><div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div><div><div class="at">Sem exceções ativas</div><div class="ad">Todos os itens dentro da meta.</div></div></div>';
 }
 
 /* ---------- Tabela SKUs ---------- */
 let sortKey='statusRank',sortDir=-1;
-function statusPill(s){
-  const m={crit:['b-red','Crítico'],warn:['b-amber','Atenção'],ok:['b-green','Saudável']};
-  return `<span class="badge ${m[s][0]}">${m[s][1]}</span>`;
-}
-function miniBar(v,max,col){return `<span class="mini-bar"><i style="width:${Math.min(v/max*100,100)}%;background:${col}"></i></span>`;}
 function renderTable(){
+  const skus=(DATA.skus||[]).map(s=>({...s,statusRank:STATUS_RANK[s.status]!=null?STATUS_RANK[s.status]:0,
+    tend:(s.sparkline&&s.sparkline.length)?(s.sparkline[s.sparkline.length-1]-s.sparkline[0]):0}));
   const q=document.getElementById('skuSearch').value.toLowerCase();
   const fam=document.getElementById('famFilter').value;
   const st=document.getElementById('statusFilter').value;
-  let rows=SKUS.filter(s=>{
-    const match=(s.sku+' '+s.fam+' '+s.bitola).toLowerCase().includes(q);
-    return match && (!fam||s.fam===fam) && (!st||s.status===st);
+  let rows=skus.filter(s=>{
+    const match=((s.sku||'')+' '+(s.familia||'')+' '+(s.bitola||'')).toLowerCase().includes(q);
+    return match && (!fam||s.familia===fam) && (!st||s.status===st);
   });
   rows.sort((a,b)=>{
     let x=a[sortKey],y=b[sortKey];
     if(typeof x==='string'){return sortDir*x.localeCompare(y);}
-    return sortDir*(x-y);
+    return sortDir*((x||0)-(y||0));
   });
   const otifCol=v=>v<90?'var(--red)':v<95?'var(--amber)':'var(--green)';
   document.getElementById('skuBody').innerHTML=rows.map(s=>`
     <tr>
-      <td><div class="sku-name">${s.sku}</div><div class="sku-fam">${s.fam}</div></td>
-      <td>${s.bitola}</td>
-      <td class="num">${fmt(s.demanda)}</td>
-      <td class="num">${miniBar(s.otif,100,otifCol(s.otif))} ${fmt(s.otif,1)}%</td>
-      <td class="num">${fmt(s.fill,1)}%</td>
-      <td class="num">${fmt(s.ader,0)}%</td>
-      <td class="num"><b style="color:${s.cobertura<18?'var(--red)':s.cobertura>50?'var(--amber)':'var(--green)'}">${s.cobertura}d</b></td>
-      <td class="num">${fmt(s.ss)}</td>
+      <td><div class="sku-name">${s.sku}</div><div class="sku-fam">${s.familia}</div></td>
+      <td>${s.bitola||'—'}</td>
+      <td class="num">${fmt(s.demanda_sem_t)}</td>
+      <td class="num">${miniBar(s.otif_pct,100,otifCol(s.otif_pct))} ${fmt(s.otif_pct,1)}%</td>
+      <td class="num">${fmt(s.aderencia_pct,0)}%</td>
+      <td class="num"><b style="color:${s.cobertura_dias<15?'var(--red)':s.cobertura_dias>50?'var(--amber)':'var(--green)'}">${fmt(s.cobertura_dias)}d</b></td>
+      <td class="num">${fmt(s.safety_stock_t)}</td>
+      <td>${sparkline(s.sparkline)}</td>
       <td>${statusPill(s.status)}</td>
     </tr>`).join('');
   if(rows.length===0) document.getElementById('skuBody').innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--txt-3);padding:24px">Nenhum SKU encontrado.</td></tr>';
 }
-function initTable(){
+let tableBound=false;
+function initTableData(){
   const sel=document.getElementById('famFilter');
-  FAMILIES.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sel.appendChild(o);});
-  document.getElementById('skuSearch').addEventListener('input',renderTable);
-  document.getElementById('famFilter').addEventListener('change',renderTable);
-  document.getElementById('statusFilter').addEventListener('change',renderTable);
-  document.querySelectorAll('#skuTable th').forEach(th=>{
-    th.addEventListener('click',()=>{
-      const k=th.dataset.sort;
-      if(sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=1;}
-      renderTable();
+  const cur=sel.value;
+  const fams=[...new Set((DATA.skus||[]).map(s=>s.familia))];
+  sel.innerHTML='<option value="">Todas as famílias</option>'+fams.map(f=>`<option value="${f}">${f}</option>`).join('');
+  sel.value=cur;
+  if(!tableBound){
+    document.getElementById('skuSearch').addEventListener('input',renderTable);
+    document.getElementById('famFilter').addEventListener('change',renderTable);
+    document.getElementById('statusFilter').addEventListener('change',renderTable);
+    document.querySelectorAll('#skuTable th').forEach(th=>{
+      th.addEventListener('click',()=>{
+        const k=th.dataset.sort;
+        if(sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=1;}
+        renderTable();
+      });
     });
-  });
+    tableBound=true;
+  }
   renderTable();
 }
 
 /* =====================================================================
-   VIEW ACURACIDADE
+   VIEW ACURACIDADE — a partir de DATA.acuracidade_familias + monte_carlo
    ===================================================================== */
-function initAccuracy(){
-  const famData=FAMILIES.map(f=>{
-    const arr=SKUS.filter(s=>s.fam===f);
-    const mape = +(8 + (arr.reduce((a,s)=>a+(100-s.ader),0)/arr.length)*0.9).toFixed(1);
-    const vies = +(((arr.reduce((a,s)=>a+s.otif,0)/arr.length)-94)* (Math.random()>.5?1:-1)).toFixed(1);
-    return {f,mape:Math.min(mape,26),vies};
-  });
-  // KPIs de acuracidade
-  const mapeMed=+(famData.reduce((a,d)=>a+d.mape,0)/famData.length).toFixed(1);
-  const viesMed=+(famData.reduce((a,d)=>a+d.vies,0)/famData.length).toFixed(1);
-  const best=famData.reduce((a,b)=>a.mape<b.mape?a:b);
-  const worst=famData.reduce((a,b)=>a.mape>b.mape?a:b);
+function initAccuracy(reRender){
+  const fd=DATA.acuracidade_familias||[];
+  const k=DATA.kpis||{};
+  const best=fd.length?fd.reduce((a,b)=>a.mape_pct<b.mape_pct?a:b):{familia:'—',mape_pct:0};
+  const worst=fd.length?fd.reduce((a,b)=>a.mape_pct>b.mape_pct?a:b):{familia:'—',mape_pct:0};
   const accKpis=[
-    {l:'MAPE Consolidado',v:fmt(mapeMed,1)+'<small>%</small>',d:mapeMed<=12?'Dentro da meta (≤12%)':'Acima da meta',cls:mapeMed<=12?'up':'down',col:'var(--violet-2)',glow:'rgba(139,92,246,.18)',icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 4-7"/>'},
-    {l:'Viés Médio',v:(viesMed>0?'+':'')+fmt(viesMed,1)+'<small>%</small>',d:viesMed>0?'Plano superestima':'Plano subestima',cls:'flat',col:'var(--amber)',glow:'rgba(251,191,36,.16)',icon:'<path d="M12 2v20M2 12h20"/>'},
-    {l:'Melhor Família',v:best.f.split(' ')[0],d:'MAPE '+fmt(best.mape,1)+'%',cls:'up',col:'var(--green)',glow:'rgba(52,211,153,.16)',icon:'<path d="M9 11l3 3L22 4"/>'},
-    {l:'Pior Família',v:worst.f.split(' ')[0],d:'MAPE '+fmt(worst.mape,1)+'%',cls:'down',col:'var(--red)',glow:'rgba(248,113,113,.16)',icon:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'},
+    {l:'MAPE Consolidado',v:fmt(k.mape_pct,1)+'<small>%</small>',d:(k.mape_pct<=12?'Dentro da meta (≤12%)':'Acima da meta'),cls:(k.mape_pct<=12?'up':'down'),col:'var(--violet-2)',glow:'rgba(139,92,246,.18)',icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 4-7"/>'},
+    {l:'Viés Médio',v:(k.bias_pct>0?'+':'')+fmt(k.bias_pct,1)+'<small>%</small>',d:(k.bias_pct>0?'Plano superestima':'Plano subestima'),cls:'flat',col:'var(--amber)',glow:'rgba(251,191,36,.16)',icon:'<path d="M12 2v20M2 12h20"/>'},
+    {l:'Melhor Família',v:(best.familia||'—').split(' ')[0],d:'MAPE '+fmt(best.mape_pct,1)+'%',cls:'up',col:'var(--green)',glow:'rgba(52,211,153,.16)',icon:'<path d="M9 11l3 3L22 4"/>'},
+    {l:'Pior Família',v:(worst.familia||'—').split(' ')[0],d:'MAPE '+fmt(worst.mape_pct,1)+'%',cls:'down',col:'var(--red)',glow:'rgba(248,113,113,.16)',icon:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'},
   ];
   document.getElementById('kpiAcc').innerHTML=accKpis.map(k=>`
     <div class="kpi" style="--glow:${k.glow}">
@@ -1021,119 +1390,131 @@ function initAccuracy(){
     </div>`).join('');
 
   // MAPE + Viés combo
+  if(charts.mape) charts.mape.destroy();
   charts.mape=new Chart(document.getElementById('chMape'),{
-    data:{labels:famData.map(d=>d.f.replace(' ','\n')),datasets:[
-      {type:'bar',label:'MAPE (%)',data:famData.map(d=>d.mape),backgroundColor:famData.map(d=>d.mape<=12?'rgba(139,92,246,.85)':'rgba(248,113,113,.82)'),borderRadius:6,barThickness:30,order:2,yAxisID:'y'},
-      {type:'line',label:'Viés (%)',data:famData.map(d=>d.vies),borderColor:'#fbbf24',backgroundColor:'#fbbf24',borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,order:1,yAxisID:'y1'}
+    data:{labels:fd.map(d=>(d.familia||'').replace(' ','\n')),datasets:[
+      {type:'bar',label:'MAPE (%)',data:fd.map(d=>d.mape_pct),backgroundColor:fd.map(d=>d.mape_pct<=12?'rgba(139,92,246,.85)':'rgba(248,113,113,.82)'),borderRadius:6,barThickness:30,order:2,yAxisID:'y'},
+      {type:'line',label:'Viés (%)',data:fd.map(d=>d.bias_pct),borderColor:'#fbbf24',backgroundColor:'#fbbf24',borderWidth:2.5,tension:.35,pointRadius:4,pointHoverRadius:6,order:1,yAxisID:'y1'}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT,
-        annotation:false},
+      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
       scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
         y:{grid:{color:GRID},title:{display:true,text:'MAPE %'},min:0,suggestedMax:28},
         y1:{position:'right',grid:{display:false},title:{display:true,text:'Viés %'}}}}
   });
 
-  // Planejado vs realizado
-  const plan=WEEKS.map((_,i)=>2800+Math.round(200*Math.sin(i/2.5))+i*6);
-  const real=plan.map((p,i)=>Math.round(p*(1+(Math.sin(i*1.7)*0.05)-(i>9?0.04:0))));
-  charts.planreal=new Chart(document.getElementById('chPlanReal'),{
-    data:{labels:WEEKS,datasets:[
-      {type:'line',label:'Planejado (t)',data:plan,borderColor:'#22d3ee',backgroundColor:'transparent',borderWidth:2.5,borderDash:[6,4],tension:.4,pointRadius:0,pointHoverRadius:5},
-      {type:'line',label:'Realizado (t)',data:real,borderColor:'#34d399',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(52,211,153,.25)','rgba(52,211,153,0)'),fill:true,borderWidth:2.5,tension:.4,pointRadius:0,pointHoverRadius:5}
+  // Planejado vs realizado por família
+  if(charts.planreal) charts.planreal.destroy();
+  charts.planreal=new Chart(document.getElementById('chPlanReal'),{type:'bar',
+    data:{labels:fd.map(d=>(d.familia||'').replace(' ','\n')),datasets:[
+      {label:'Planejado (t)',data:fd.map(d=>d.planejado_t),backgroundColor:'rgba(34,211,238,.75)',borderRadius:6,barThickness:18},
+      {label:'Realizado (t)',data:fd.map(d=>d.realizado_t),backgroundColor:'rgba(52,211,153,.8)',borderRadius:6,barThickness:18}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
-      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'t / semana'}}}}
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:GRID},title:{display:true,text:'t no horizonte'}}}}
   });
 
-  // Distribuição de risco (Monte Carlo simplificado determinístico)
+  // Monte Carlo (50.000) — direto de DATA.monte_carlo
   buildRiskChart();
 
-  // Tendência acuracidade
-  const wk=Array.from({length:12},(_,i)=>'S'+(i+1));
-  const mtrend=wk.map((_,i)=>+(16 - i*0.5 + Math.sin(i)*1.2).toFixed(1));
-  const vtrend=wk.map((_,i)=>+(4*Math.cos(i/2)).toFixed(1));
+  // Balanço por semana (kt) — demanda/suprimento/cobertura
+  const bw=DATA.balanco_semanas||[];
+  if(charts.acctrend) charts.acctrend.destroy();
   charts.acctrend=new Chart(document.getElementById('chAccTrend'),{
-    data:{labels:wk,datasets:[
-      {type:'line',label:'MAPE (%)',data:mtrend,borderColor:'#a78bfa',backgroundColor:(c)=>grad(c.chart.ctx,'rgba(139,92,246,.25)','rgba(139,92,246,0)'),fill:true,borderWidth:2.5,tension:.4,pointRadius:0,pointHoverRadius:5},
-      {type:'line',label:'Viés (%)',data:vtrend,borderColor:'#fbbf24',borderWidth:2,tension:.4,pointRadius:0,pointHoverRadius:5,borderDash:[5,4]}
+    data:{labels:bw.map(w=>w.semana),datasets:[
+      {type:'bar',label:'Demanda (kt)',data:bw.map(w=>w.demanda_kt),backgroundColor:'rgba(139,92,246,.7)',borderRadius:5,barPercentage:.6,yAxisID:'y'},
+      {type:'bar',label:'Suprimento (kt)',data:bw.map(w=>w.suprimento_kt),backgroundColor:'rgba(34,211,238,.7)',borderRadius:5,barPercentage:.6,yAxisID:'y'},
+      {type:'line',label:'Cobertura (dias)',data:bw.map(w=>w.cobertura_dias),borderColor:'#34d399',borderWidth:2.5,tension:.4,pointRadius:0,pointHoverRadius:5,yAxisID:'y1'}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
-      scales:{x:{grid:{display:false}},y:{grid:{color:GRID},title:{display:true,text:'%'}}}}
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:GRID},title:{display:true,text:'kt'}},
+        y1:{position:'right',grid:{display:false},title:{display:true,text:'dias'}}}}
   });
 }
 
 function buildRiskChart(){
-  // simulação determinística: gera N realizações de cobertura
-  const meanDem=SKUS.reduce((a,s)=>a+s.demanda,0)/SKUS.length;
-  const meanStock=SKUS.reduce((a,s)=>a+s.estoque,0)/SKUS.length;
-  const cv=0.18; // coef. variação
-  const N=5000, bins={}, binW=4;
-  // pseudo-normal via soma (Irwin-Hall) determinística com seed
-  let seed=42; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
-  for(let i=0;i<N;i++){
-    let g=0;for(let k=0;k<6;k++)g+=rnd();g=(g-3)/Math.sqrt(0.5); // ~N(0,1)
-    const dem=Math.max(meanDem*(1+cv*g),meanDem*0.4);
-    const cob=meanStock/(dem/7);
-    const b=Math.floor(cob/binW)*binW;
-    bins[b]=(bins[b]||0)+1;
-  }
-  const labels=Object.keys(bins).map(Number).sort((a,b)=>a-b);
-  const data=labels.map(l=>bins[l]/N*100);
-  const target=labels.map(l=> (l>=20&&l<=45));
+  const mc=DATA.monte_carlo||{};
+  const samples=mc.samples||50000;
+  document.getElementById('mcBadge').textContent=fmt(samples)+' cenários';
+  const bins=mc.bins||[];
+  const hist=mc.hist||[];
+  const total=hist.reduce((a,b)=>a+b,0)||1;
+  const binW=bins.length>1?(bins[1]-bins[0]):4;
+  const labels=bins.map(b=>b+'–'+(b+binW)+'d');
+  const data=hist.map(h=>+(h/total*100).toFixed(2));
+  if(charts.risk) charts.risk.destroy();
   charts.risk=new Chart(document.getElementById('chRisk'),{type:'bar',
-    data:{labels:labels.map(l=>l+'–'+(l+binW)+'d'),datasets:[{
+    data:{labels,datasets:[{
       label:'Probabilidade (%)',data,
-      backgroundColor:labels.map((l,i)=> l<16?'rgba(248,113,113,.8)': l>50?'rgba(251,191,36,.8)': target[i]?'rgba(52,211,153,.85)':'rgba(139,92,246,.7)'),
+      backgroundColor:bins.map((b,i)=> b<7?'rgba(248,113,113,.8)': b>50?'rgba(251,191,36,.8)': (b>=15&&b<=45)?'rgba(52,211,153,.85)':'rgba(139,92,246,.7)'),
       borderRadius:4,barThickness:'flex',categoryPercentage:.95,barPercentage:.98}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{...TT,callbacks:{
         title:c=>'Cobertura '+c[0].label,
-        label:c=>fmt(c.parsed.y,1)+'% dos cenários'+(parseInt(c.label)<16?' · risco ruptura':parseInt(c.label)>50?' · excesso':' · zona-alvo')}}},
+        label:c=>fmt(c.parsed.y,1)+'% dos '+fmt(samples)+' cenários'+(parseInt(c.label)<7?' · risco ruptura':parseInt(c.label)>50?' · excesso':' · zona-alvo')}}},
       scales:{x:{grid:{display:false},title:{display:true,text:'dias de cobertura'}},
         y:{grid:{color:GRID},title:{display:true,text:'% dos cenários'}}}}
   });
+  // estatísticas
+  const z=mc.zonas||{};
+  const cells=[
+    {l:'P(ruptura)',v:fmt((mc.p_ruptura||0)*100,1)+'%',c:'var(--red)'},
+    {l:'P5 cobertura',v:fmt(mc.p5_cobertura,1)+'d',c:'var(--amber)'},
+    {l:'P50 (mediana)',v:fmt(mc.p50_cobertura,1)+'d',c:'var(--green)'},
+    {l:'P95 cobertura',v:fmt(mc.p95_cobertura,1)+'d',c:'var(--cyan)'},
+  ];
+  document.getElementById('mcStats').innerHTML=cells.map(c=>`
+    <div class="mc-cell"><div class="ml">${c.l}</div><div class="mv" style="color:${c.c}">${c.v}</div></div>`).join('');
 }
 
 /* =====================================================================
-   VIEW SIMULADOR — recálculo ao vivo
+   VIEW SIMULADOR — recálculo client-side a partir dos parâmetros-base
    ===================================================================== */
 const SIM_DEFAULTS={svc:95,cap:100,lt:3,cost:22,margin:18,demand:0};
 const sim={...SIM_DEFAULTS};
+let BASE=null;
 
-// base agregada do horizonte
-const BASE={
-  receita: 168_000_000, // R$ no horizonte
-  volume: SKUS.reduce((a,s)=>a+s.demanda,0)*13, // t no horizonte
-  precoMed: SKUS.reduce((a,s)=>a+s.preco*s.demanda,0)/SKUS.reduce((a,s)=>a+s.demanda,0),
-  sigmaMed: SKUS.reduce((a,s)=>a+s.sigma,0)/SKUS.length,
-  demMed: SKUS.reduce((a,s)=>a+s.demanda,0),
-};
-
-// calcula um cenário a partir de overrides de serviço + pesos
-function computeScenario(svcTarget,weights){
-  const demFactor=1+sim.demand/100;
-  const z=zInterp(svcTarget);
-  // estoque de segurança agregado (t) ~ z*sigma*sqrt(LT)*nSkus
-  const ss = z*BASE.sigmaMed*Math.sqrt(sim.lt)*SKUS.length*demFactor;
-  // estoque ciclo + segurança
-  const estoque = (BASE.demMed*sim.lt/2 + ss)*demFactor;
-  const capital = estoque*BASE.precoMed;               // R$ imobilizado
-  const custoEstoque = capital*(sim.cost/100)*(13/52); // custo no horizonte (13 sem)
-  // serviço atingido limitado pela capacidade
-  const capPenalty = sim.cap<100 ? (100-sim.cap)*0.35 : 0;
-  const servico = Math.max(80,Math.min(99.5, svcTarget - capPenalty - Math.max(0,(sim.lt-3))*0.6 ));
-  // receita ajustada por demanda e perdas de serviço
-  const receita=BASE.receita*demFactor*(servico/100);
-  // EBITDA: margem base − impacto de custo de estoque, +ganho marginal de serviço alto
-  const ebitdaMargin = sim.margin/100 - (custoEstoque/receita) + (servico-90)/100*0.18;
-  const ebitda = receita*ebitdaMargin;
-  return {svcTarget,z,servico,estoque,capital,custoEstoque,receita,ebitda,ebitdaMargin};
+function computeBase(){
+  const skus=DATA.skus||[];
+  const totDem=skus.reduce((a,s)=>a+s.demanda_sem_t,0)||1;
+  BASE={
+    receita: (DATA.kpis&&DATA.kpis.ebitda_projetado_mi? DATA.kpis.ebitda_projetado_mi/0.18*1e6 : 168e6),
+    demMed: totDem,
+    precoMed: skus.reduce((a,s)=>a+(s.preco_rs_t||4500)*s.demanda_sem_t,0)/totDem,
+    sigmaMed: skus.length? skus.reduce((a,s)=>a+(s.sigma_sem_t||40),0)/skus.length : 40,
+    nSkus: skus.length||15,
+  };
+  // semente default do simulador a partir do 1o cenário recomendado
+  const reco=(DATA.cenarios||[]).find(c=>c.recomendado)||(DATA.cenarios||[])[0];
+  if(reco){
+    SIM_DEFAULTS.svc=Math.round(reco.ns_pct||95);
+    SIM_DEFAULTS.lt=DATA.kpis&&DATA.kpis.cobertura_media_dias?3:3;
+  }
 }
 
-// normalização para score (entre os 3 cenários)
+function zInterp(svc){
+  const pts=[[90,1.28],[95,1.65],[97,1.88],[99,2.33]];
+  if(svc<=90) return 1.28; if(svc>=99) return 2.33;
+  for(let i=0;i<pts.length-1;i++){const [x0,y0]=pts[i],[x1,y1]=pts[i+1];if(svc>=x0&&svc<=x1){return y0+(y1-y0)*((svc-x0)/(x1-x0));}}
+  return 1.65;
+}
+function computeScenario(svcTarget){
+  const demFactor=1+sim.demand/100;
+  const z=zInterp(svcTarget);
+  const ss=z*BASE.sigmaMed*Math.sqrt(sim.lt)*BASE.nSkus*demFactor;
+  const estoque=(BASE.demMed*sim.lt/2 + ss)*demFactor;
+  const capital=estoque*BASE.precoMed;
+  const custoEstoque=capital*(sim.cost/100)*(13/52);
+  const capPenalty=sim.cap<100?(100-sim.cap)*0.35:0;
+  const servico=Math.max(80,Math.min(99.5, svcTarget - capPenalty - Math.max(0,(sim.lt-3))*0.6));
+  const receita=BASE.receita*demFactor*(servico/100);
+  const ebitdaMargin=sim.margin/100 - (custoEstoque/receita) + (servico-90)/100*0.18;
+  const ebitda=receita*ebitdaMargin;
+  return {svcTarget,z,servico,estoque,capital,custoEstoque,receita,ebitda,ebitdaMargin};
+}
 function scoreScenarios(list){
   const sMax=Math.max(...list.map(s=>s.servico)),sMin=Math.min(...list.map(s=>s.servico));
   const eMax=Math.max(...list.map(s=>s.ebitda)),eMin=Math.min(...list.map(s=>s.ebitda));
@@ -1147,15 +1528,13 @@ function scoreScenarios(list){
     s.score=Math.round((s.w.s*sv + s.w.e*eb + s.w.c*co + s.w.k*ca)*100);
   });
 }
-
 const SCEN_META=[
   {key:'s1',name:'Serviço 99%',type:'Máximo nível de serviço',svc:99,w:{s:.50,e:.20,c:.15,k:.15},col:'#34d399'},
   {key:'s2',name:'Rentabilidade',type:'Foco em EBITDA e capital',svc:93,w:{s:.18,e:.42,c:.25,k:.15},col:'#fbbf24'},
   {key:'s3',name:'Equilíbrio',type:'Balanço serviço × custo',svc:96,w:{s:.33,e:.30,c:.20,k:.17},col:'#a78bfa'},
 ];
-
 function runSim(){
-  const list=SCEN_META.map(m=>{const c=computeScenario(m.svc,m.w);return {...m,...c,w:m.w};});
+  const list=SCEN_META.map(m=>{const c=computeScenario(m.svc);return {...m,...c,w:m.w};});
   scoreScenarios(list);
   const reco=list.reduce((a,b)=>a.score>=b.score?a:b);
   renderScenCards(list,reco);
@@ -1164,7 +1543,6 @@ function runSim(){
   updateScenCharts(list,reco);
   return {list,reco};
 }
-
 function ringSVG(score,col){
   const r=26,c=2*Math.PI*r,off=c*(1-score/100);
   return `<div class="ring"><svg width="62" height="62" viewBox="0 0 62 62">
@@ -1173,7 +1551,6 @@ function ringSVG(score,col){
       stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
     </svg><div class="rv" style="color:${col}">${score}</div></div>`;
 }
-
 function renderScenCards(list,reco){
   document.getElementById('scenGrid').innerHTML=list.map(s=>`
     <div class="scen ${s.key===reco.key?'reco':''}">
@@ -1196,7 +1573,6 @@ function renderScenCards(list,reco){
       </ul>
     </div>`).join('');
 }
-
 function renderRecoBanner(reco,list){
   document.getElementById('recoName').textContent=reco.name;
   document.getElementById('recoScore').textContent=reco.score;
@@ -1205,14 +1581,13 @@ function renderRecoBanner(reco,list){
     `Melhor equilíbrio entre serviço (${fmt(reco.servico,1)}%), EBITDA (${fmtBRL(reco.ebitda)}) e custo de estoque (${fmtBRL(reco.custoEstoque)}). `+
     `Supera "${others[0].name}" (${others[0].score}) e "${others[1].name}" (${others[1].score}) no score ponderado.`;
 }
-
 function renderScenTable(list,reco){
   document.getElementById('th-s1').textContent=list[0].name;
   document.getElementById('th-s2').textContent=list[1].name;
   document.getElementById('th-s3').textContent=list[2].name;
   const rows=[
     ['Serviço atingido',s=>fmt(s.servico,1)+'%'],
-    ['Fator Z',s=>fmt(s.z,2).replace('.',',')],
+    ['Fator Z',s=>fmt(s.z,2)],
     ['Estoque (t)',s=>fmt(s.estoque)],
     ['Caixa imobilizado',s=>fmtBRL(s.capital)],
     ['Custo de estoque (13 sem)',s=>fmtBRL(s.custoEstoque)],
@@ -1221,73 +1596,73 @@ function renderScenTable(list,reco){
     ['EBITDA projetado',s=>fmtBRL(s.ebitda)],
     ['Score',s=>`<b style="color:${s.col}">${s.score}</b>`],
   ];
+  const hl=(k)=>reco.key===k?'background:rgba(52,211,153,.07)':'';
   document.getElementById('scenTableBody').innerHTML=rows.map(([lbl,fn])=>`
     <tr>
       <td style="font-weight:600">${lbl}</td>
-      <td class="num" style="${reco.key==='s1'?'background:rgba(52,211,153,.07)':''}">${fn(list[0])}</td>
-      <td class="num" style="${reco.key==='s2'?'background:rgba(52,211,153,.07)':''}">${fn(list[1])}</td>
-      <td class="num" style="${reco.key==='s3'?'background:rgba(52,211,153,.07)':''}">${fn(list[2])}</td>
+      <td class="num" style="${hl('s1')}">${fn(list[0])}</td>
+      <td class="num" style="${hl('s2')}">${fn(list[1])}</td>
+      <td class="num" style="${hl('s3')}">${fn(list[2])}</td>
     </tr>`).join('');
 }
-
-function initSimulator(){
-  // sliders
-  const bind=(id,fn)=>{
-    const el=document.getElementById(id);
-    const upd=()=>{
-      sim[fn]=parseFloat(el.value);
+let simBound=false;
+function initSimulator(reRender){
+  computeBase();
+  if(!simBound){
+    const bind=(id,fn)=>{
+      const el=document.getElementById(id);
+      const upd=()=>{
+        sim[fn]=parseFloat(el.value);
+        el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');
+        updateSliderLabels();runSim();
+        if(lazyInit.tradeoff) updateTradeoff();
+      };
+      el.addEventListener('input',upd);
       el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');
-      updateSliderLabels();
-      runSim();
-      if(lazyInit.tradeoff) updateTradeoff();
     };
-    el.addEventListener('input',upd);
-    el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');
-  };
-  bind('sSvc','svc');bind('sCap','cap');bind('sLT','lt');bind('sCost','cost');bind('sMargin','margin');bind('sDemand','demand');
-  document.getElementById('btnReset').addEventListener('click',()=>{
-    Object.assign(sim,SIM_DEFAULTS);
-    const map={sSvc:'svc',sCap:'cap',sLT:'lt',sCost:'cost',sMargin:'margin',sDemand:'demand'};
-    Object.entries(map).forEach(([id,k])=>{const el=document.getElementById(id);el.value=SIM_DEFAULTS[k];el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');});
-    updateSliderLabels();runSim();if(lazyInit.tradeoff)updateTradeoff();
-  });
-  // charts vazios
-  charts.scenBars=new Chart(document.getElementById('chScenBars'),{type:'bar',
-    data:{labels:['Serviço (%)','Caixa imob. (R$mi)','Custo est. (R$mi)','EBITDA (R$mi)'],datasets:[]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
-      scales:{x:{grid:{display:false}},y:{grid:{color:GRID}}}}
-  });
-  charts.scenRadar=new Chart(document.getElementById('chScenRadar'),{type:'radar',
-    data:{labels:['Serviço','Rentabilidade','Efic. Capital','Baixo Custo'],datasets:[]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
-      scales:{r:{angleLines:{color:GRID},grid:{color:GRID},pointLabels:{color:'#9fb0d4',font:{size:11}},
-        ticks:{display:false,stepSize:25},min:0,max:100,suggestedMax:100}}}
-  });
+    bind('sSvc','svc');bind('sCap','cap');bind('sLT','lt');bind('sCost','cost');bind('sMargin','margin');bind('sDemand','demand');
+    document.getElementById('btnReset').addEventListener('click',()=>{
+      Object.assign(sim,SIM_DEFAULTS);
+      const map={sSvc:'svc',sCap:'cap',sLT:'lt',sCost:'cost',sMargin:'margin',sDemand:'demand'};
+      Object.entries(map).forEach(([id,k])=>{const el=document.getElementById(id);el.value=SIM_DEFAULTS[k];el.style.setProperty('--p',((el.value-el.min)/(el.max-el.min)*100)+'%');});
+      updateSliderLabels();runSim();if(lazyInit.tradeoff)updateTradeoff();
+    });
+    simBound=true;
+  }
+  if(!charts.scenBars){
+    charts.scenBars=new Chart(document.getElementById('chScenBars'),{type:'bar',
+      data:{labels:['Serviço (%)','Caixa imob. (R$mi)','Custo est. (R$mi)','EBITDA (R$mi)'],datasets:[]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+        scales:{x:{grid:{display:false}},y:{grid:{color:GRID}}}}});
+  }
+  if(!charts.scenRadar){
+    charts.scenRadar=new Chart(document.getElementById('chScenRadar'),{type:'radar',
+      data:{labels:['Serviço','Rentabilidade','Efic. Capital','Baixo Custo'],datasets:[]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+        scales:{r:{angleLines:{color:GRID},grid:{color:GRID},pointLabels:{color:'#9fb0d4',font:{size:11}},
+          ticks:{display:false,stepSize:25},min:0,max:100,suggestedMax:100}}}});
+  }
   updateSliderLabels();
   runSim();
 }
-
 function updateSliderLabels(){
   document.getElementById('vSvc').textContent=sim.svc+'%';
   document.getElementById('vCap').textContent=sim.cap+'%';
-  document.getElementById('vLT').textContent=fmt(sim.lt,1).replace('.',',')+' sem';
+  document.getElementById('vLT').textContent=fmt(sim.lt,1)+' sem';
   document.getElementById('vCost').textContent=sim.cost+'%';
   document.getElementById('vMargin').textContent=sim.margin+'%';
   document.getElementById('vDemand').textContent=(sim.demand>0?'+':'')+sim.demand+'%';
 }
-
 function updateScenCharts(list,reco){
-  // barras agrupadas
   charts.scenBars.data.datasets=list.map(s=>({
     label:s.name,
     data:[s.servico, s.capital/1e6, s.custoEstoque/1e6, s.ebitda/1e6],
-    backgroundColor:s.col+ (s.key===reco.key?'':'cc'),
+    backgroundColor:s.col+(s.key===reco.key?'':'cc'),
     borderColor:s.col,borderWidth:s.key===reco.key?2:0,borderRadius:5,barPercentage:.8,categoryPercentage:.7
   }));
   charts.scenBars.update();
-  // radar
   charts.scenRadar.data.datasets=list.map(s=>({
     label:s.name,
     data:[s.parts.servico*100,s.parts.ebitda*100,s.parts.capital*100,s.parts.custo*100],
@@ -1300,36 +1675,38 @@ function updateScenCharts(list,reco){
 /* =====================================================================
    VIEW TRADE-OFF
    ===================================================================== */
-function initTradeoff(){
-  charts.bubble=new Chart(document.getElementById('chBubble'),{type:'bubble',
-    data:{datasets:[]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},
-        tooltip:{...TT,callbacks:{
-          label:c=>{const d=c.raw;return [`${d.name}`,`Serviço: ${fmt(d.x,1)}%`,`Custo estoque: ${fmtBRL(d.cost)}`,`Caixa imob.: ${fmtBRL(d.cap)}`];}}}},
-      scales:{x:{grid:{color:GRID},title:{display:true,text:'Nível de serviço atingido (%)'},min:82,max:100},
-        y:{grid:{color:GRID},title:{display:true,text:'Custo de estoque (R$ milhões)'}}}}
-  });
-  charts.frontier=new Chart(document.getElementById('chFrontier'),{type:'line',
-    data:{labels:[],datasets:[]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
-      scales:{x:{grid:{display:false},title:{display:true,text:'Nível de serviço (%)'}},
-        y:{grid:{color:GRID},title:{display:true,text:'Custo de estoque (R$mi)'}}}}
-  });
-  charts.sens=new Chart(document.getElementById('chSens'),{type:'line',
-    data:{labels:[],datasets:[]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
-      scales:{x:{grid:{display:false},title:{display:true,text:'Nível de serviço-alvo (%)'}},
-        y:{grid:{color:GRID},title:{display:true,text:'Score de equilíbrio'},min:0,max:100}}}
-  });
+function initTradeoff(reRender){
+  if(!BASE) computeBase();
+  if(!charts.bubble){
+    charts.bubble=new Chart(document.getElementById('chBubble'),{type:'bubble',
+      data:{datasets:[]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},
+          tooltip:{...TT,callbacks:{
+            label:c=>{const d=c.raw;return [`${d.name}`,`Serviço: ${fmt(d.x,1)}%`,`Custo estoque: ${fmtBRL(d.cost)}`,`Caixa imob.: ${fmtBRL(d.cap)}`];}}}},
+        scales:{x:{grid:{color:GRID},title:{display:true,text:'Nível de serviço atingido (%)'},min:82,max:100},
+          y:{grid:{color:GRID},title:{display:true,text:'Custo de estoque (R$ milhões)'}}}}});
+  }
+  if(!charts.frontier){
+    charts.frontier=new Chart(document.getElementById('chFrontier'),{type:'line',
+      data:{labels:[],datasets:[]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+        scales:{x:{grid:{display:false},title:{display:true,text:'Nível de serviço (%)'}},
+          y:{grid:{color:GRID},title:{display:true,text:'Custo de estoque (R$mi)'}}}}});
+  }
+  if(!charts.sens){
+    charts.sens=new Chart(document.getElementById('chSens'),{type:'line',
+      data:{labels:[],datasets:[]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{usePointStyle:true,pointStyle:'circle'}},tooltip:TT},
+        scales:{x:{grid:{display:false},title:{display:true,text:'Nível de serviço-alvo (%)'}},
+          y:{grid:{color:GRID},title:{display:true,text:'Score de equilíbrio'},min:0,max:100}}}});
+  }
   updateTradeoff();
 }
-
 function updateTradeoff(){
   const {list,reco}=runSim();
-  // Bubble: cada cenário
   charts.bubble.data.datasets=[{
     label:'Cenários',
     data:list.map(s=>({x:s.servico,y:s.custoEstoque/1e6,r:8+s.capital/1e6*1.4,name:s.name,cost:s.custoEstoque,cap:s.capital})),
@@ -1339,9 +1716,8 @@ function updateTradeoff(){
   charts.bubble.update();
   document.getElementById('bubbleReco').textContent='Recomendado: '+reco.name;
 
-  // Fronteira: varre serviço 88→99
-  const xs=[];const ys=[];
-  for(let v=88;v<=99;v+=1){const c=computeScenario(v,{s:.33,e:.30,c:.20,k:.17});xs.push(v);ys.push(+(c.custoEstoque/1e6).toFixed(2));}
+  const xs=[],ys=[];
+  for(let v=88;v<=99;v++){const c=computeScenario(v);xs.push(v);ys.push(+(c.custoEstoque/1e6).toFixed(2));}
   charts.frontier.data.labels=xs;
   charts.frontier.data.datasets=[{
     label:'Custo de estoque (R$mi)',data:ys,borderColor:'#22d3ee',
@@ -1350,15 +1726,9 @@ function updateTradeoff(){
   }];
   charts.frontier.update();
 
-  // Sensibilidade do score ao serviço
   const sx=[],sScore=[];
-  for(let v=90;v<=99;v+=1){
-    // monta 3 cenários onde s3 usa serviço variável
-    const tmp=[
-      computeScenario(99,{s:.50,e:.20,c:.15,k:.15}),
-      computeScenario(93,{s:.18,e:.42,c:.25,k:.15}),
-      computeScenario(v ,{s:.33,e:.30,c:.20,k:.17}),
-    ];
+  for(let v=90;v<=99;v++){
+    const tmp=[computeScenario(99),computeScenario(93),computeScenario(v)];
     tmp[0].w={s:.50,e:.20,c:.15,k:.15};tmp[1].w={s:.18,e:.42,c:.25,k:.15};tmp[2].w={s:.33,e:.30,c:.20,k:.17};
     scoreScenarios(tmp);
     sx.push(v);sScore.push(tmp[2].score);
@@ -1377,27 +1747,26 @@ function updateTradeoff(){
    ===================================================================== */
 document.getElementById('btnXlsx').addEventListener('click',()=>{
   const wb=XLSX.utils.book_new();
-  // SKUs
-  const skuRows=SKUS.map(s=>({SKU:s.sku,Família:s.fam,Bitola:s.bitola,'Demanda (t/sem)':s.demanda,
-    'OTIF (%)':s.otif,'Fill Rate (%)':s.fill,'Aderência (%)':s.ader,'Cobertura (dias)':s.cobertura,
-    'Est. Segurança (t)':s.ss,'Estoque (t)':s.estoque,'Caixa (R$)':s.valor,Status:s.status}));
+  const skuRows=(DATA.skus||[]).map(s=>({SKU:s.sku,Família:s.familia,Bitola:s.bitola,'Demanda (t/sem)':s.demanda_sem_t,
+    'OTIF (%)':s.otif_pct,'Aderência (%)':s.aderencia_pct,'Cobertura (dias)':s.cobertura_dias,
+    'Est. Segurança (t)':s.safety_stock_t,'Estoque (t)':s.estoque_t,'MAPE (%)':s.mape_pct,Status:s.status}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(skuRows),'SKUs');
-  // Cenários (estado atual do simulador)
-  const {list}=runSim();
-  const scRows=list.map(s=>({Cenário:s.name,'Serviço (%)':+s.servico.toFixed(1),'Fator Z':+s.z.toFixed(2),
-    'Estoque (t)':Math.round(s.estoque),'Caixa (R$)':Math.round(s.capital),'Custo Estoque (R$)':Math.round(s.custoEstoque),
-    'Receita (R$)':Math.round(s.receita),'Margem EBITDA (%)':+(s.ebitdaMargin*100).toFixed(1),
-    'EBITDA (R$)':Math.round(s.ebitda),Score:s.score}));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(scRows),'Cenários');
-  // Parâmetros
+  if(BASE){
+    const {list}=runSim();
+    const scRows=list.map(s=>({Cenário:s.name,'Serviço (%)':+s.servico.toFixed(1),'Fator Z':+s.z.toFixed(2),
+      'Estoque (t)':Math.round(s.estoque),'Caixa (R$)':Math.round(s.capital),'Custo Estoque (R$)':Math.round(s.custoEstoque),
+      'Receita (R$)':Math.round(s.receita),'Margem EBITDA (%)':+(s.ebitdaMargin*100).toFixed(1),
+      'EBITDA (R$)':Math.round(s.ebitda),Score:s.score}));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(scRows),'Cenários');
+  }
+  const mc=DATA.monte_carlo||{};
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([
-    {Parâmetro:'Nível de serviço-alvo',Valor:sim.svc+'%'},
-    {Parâmetro:'Capacidade',Valor:sim.cap+'%'},
-    {Parâmetro:'Lead time',Valor:sim.lt+' sem'},
-    {Parâmetro:'Custo manutenção estoque',Valor:sim.cost+'%'},
-    {Parâmetro:'Margem EBITDA-base',Valor:sim.margin+'%'},
-    {Parâmetro:'Variação de demanda',Valor:sim.demand+'%'},
-  ]),'Parâmetros');
+    {Métrica:'Amostras Monte Carlo',Valor:mc.samples||50000},
+    {Métrica:'P(ruptura)',Valor:mc.p_ruptura},
+    {Métrica:'P5 cobertura (d)',Valor:mc.p5_cobertura},
+    {Métrica:'P50 cobertura (d)',Valor:mc.p50_cobertura},
+    {Métrica:'P95 cobertura (d)',Valor:mc.p95_cobertura},
+  ]),'MonteCarlo');
   XLSX.writeFile(wb,'SOE_Laboratorio_Cenarios.xlsx');
 });
 
@@ -1422,11 +1791,11 @@ document.getElementById('btnPdf').addEventListener('click',async()=>{
 /* =====================================================================
    INIT
    ===================================================================== */
-window.addEventListener('DOMContentLoaded',()=>{
-  buildKPIs();
-  buildAnalyticCharts();
-  buildAlerts();
-  initTable();
+window.addEventListener('DOMContentLoaded', async ()=>{
+  // estado de carregamento (skeletons)
+  document.getElementById('kpiRow').innerHTML=Array.from({length:6}).map(()=>'<div class="kpi skel skel-kpi"></div>').join('');
+  await applyData(false);   // primeira carga (real ou demo)
+  pollLoop();               // polling 90s
 });
 </script>
 </body>

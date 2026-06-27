@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchAgent S&OE GLB-GFM - execucao das 08:00.
+
+  IMPORTANTE: o launchd dispara StartCalendarInterval no HORARIO LOCAL do Mac.
+  Este plist assume que o Mac esta com fuso America/Sao_Paulo (Brasilia).
+  Se o Mac estiver em outro fuso, ajuste a chave Hour abaixo para o equivalente
+  local de 08:00 BRT (a variavel TZ abaixo so afeta o processo, NAO o gatilho).
+
+  Instalar: cp em ~/Library/LaunchAgents/ e `launchctl load`. Ver SETUP.md.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.glbgfm.soe.0800</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/jose.costa/Desktop/painel-soe-glb-gfm/automacao/run.sh</string>
+    </array>
+
+    <!-- Gatilho: todo dia as 08:00 (horario local do Mac). -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Nao rodar ao carregar/login: so nos horarios agendados. -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Fuso forcado dentro do processo (datas geradas no data.json). -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>TZ</key>
+        <string>America/Sao_Paulo</string>
+    </dict>
+
+    <!-- Diretorio de trabalho = automacao/. -->
+    <key>WorkingDirectory</key>
+    <string>/Users/jose.costa/Desktop/painel-soe-glb-gfm/automacao</string>
+
+    <!-- Logs do launchd (separados do log diario do run.sh). -->
+    <key>StandardOutPath</key>
+    <string>/Users/jose.costa/Desktop/painel-soe-glb-gfm/automacao/logs/launchd-0800.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/jose.costa/Desktop/painel-soe-glb-gfm/automacao/logs/launchd-0800.err.log</string>
+</dict>
+</plist>
